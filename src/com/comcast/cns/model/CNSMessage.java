@@ -15,20 +15,18 @@
  */
 package com.comcast.cns.model;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cqs.model.CQSMessageAttribute;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Value class for CNSMessage

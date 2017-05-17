@@ -142,12 +142,7 @@ public class CNSWorkerStats {
 	}
 	
 	public boolean isProducerActive() {
-		
-		if (System.currentTimeMillis() - this.producerTimestamp > 120*1000) {
-			return false;
-		} else {
-			return true;
-		}
+		return System.currentTimeMillis() - this.producerTimestamp <= 120*1000;
 	}
 
 	public long getConsumerTimestamp() {
@@ -159,11 +154,6 @@ public class CNSWorkerStats {
 	}
 	
 	public boolean isConsumerActive() {
-		
-		if (System.currentTimeMillis() - this.consumerTimestamp > 120*1000) {
-			return false;
-		} else {
-			return true;
-		}
+		return System.currentTimeMillis() - this.consumerTimestamp <= 120*1000;
 	}
 }

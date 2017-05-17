@@ -353,14 +353,14 @@ CREATE TABLE "CQSQueuesByUserId" (
 USE "CMB";
 
 CREATE TABLE "Users" (
-  key text,
+  "userId" UUID,
+  "userName" text,
   "accessKey" text,
   "accessSecret" text,
-  description text,
+  "description" text,
   "hashPassword" text,
   "isAdmin" text,
-  "userId" text,
-  PRIMARY KEY ((key))
+  PRIMARY KEY ((userId))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -377,6 +377,44 @@ CREATE TABLE "Users" (
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'sstable_compression': 'LZ4Compressor'};
 
-CREATE INDEX usersAccessKeyIdx ON "Users" ("accessKey");
+CREATE TABLE "UserIdByName" (
+  "userId" UUID,
+  "userName" text,
+  "hashPassword" text,
+  PRIMARY KEY ((userName))
+) WITH COMPACT STORAGE AND
+  bloom_filter_fp_chance=0.100000 AND
+  caching='ALL' AND
+  comment='' AND
+  dclocal_read_repair_chance=0.050000 AND
+  gc_grace_seconds=864000 AND
+  index_interval=128 AND
+  read_repair_chance=0.000000 AND
+  replicate_on_write='true' AND
+  populate_io_cache_on_flush='false' AND
+  default_time_to_live=0 AND
+  speculative_retry='NONE' AND
+  memtable_flush_period_in_ms=0 AND
+  compaction={'class': 'LeveledCompactionStrategy'} AND
+  compression={'sstable_compression': 'LZ4Compressor'};
 
-CREATE INDEX usersUserIdIdx ON "Users" ("userId");
+CREATE TABLE "userIdsByAccessKey" (
+  "userId" UUID,
+  "accessKey" text,
+  "accessSecret" text,
+  PRIMARY KEY ((accessKey))
+) WITH COMPACT STORAGE AND
+  bloom_filter_fp_chance=0.100000 AND
+  caching='ALL' AND
+  comment='' AND
+  dclocal_read_repair_chance=0.050000 AND
+  gc_grace_seconds=864000 AND
+  index_interval=128 AND
+  read_repair_chance=0.000000 AND
+  replicate_on_write='true' AND
+  populate_io_cache_on_flush='false' AND
+  default_time_to_live=0 AND
+  speculative_retry='NONE' AND
+  memtable_flush_period_in_ms=0 AND
+  compaction={'class': 'LeveledCompactionStrategy'} AND
+  compression={'sstable_compression': 'LZ4Compressor'};

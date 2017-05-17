@@ -20,8 +20,8 @@ public class DurablePersistenceFactory {
 	private void CassandraPersistenceFactory() {
 	}
 
-	public static AbstractDurablePersistence getInstance() {
+	public static CassandraDataStaxPersistence getInstance() {
 		//return CassandraHectorPersistence.getInstance();
-		return CassandraAstyanaxPersistence.getInstance();
+		return CassandraDataStaxPersistence.getInstance();
 	}
 }

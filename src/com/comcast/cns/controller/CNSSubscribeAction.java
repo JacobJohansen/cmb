@@ -88,7 +88,7 @@ public class CNSSubscribeAction extends CNSAction {
     	logger.debug("event=cns_subscribe endpoint=" + endpoint + " protocol=" + protocol + " user_id=" + userId + " topic_arn=" + topicArn);
 		
     	
-    	if (!subProtocol.isValidEnpoint(endpoint)) {
+    	if (!subProtocol.isValidEndpoint(endpoint)) {
     		logger.error("event=cns_subscribe error_code=InvalidParameters problem=invalidEndpoint user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}

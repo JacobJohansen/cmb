@@ -15,10 +15,10 @@
  */
 package com.comcast.cns.persistence;
 
-import java.util.List;
-
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
+
+import java.util.List;
 
 /**
  * Interface representing persistence functionality for subscriptions
@@ -44,7 +44,6 @@ public interface ICNSSubscriptionPersistence {
 	/**
 	 * Get a single subscription object by arn. Not part of official AWS API.
 	 * @param arn subscription arn
-	 * @param userId user id
 	 * @return subscription
 	 * @throws Exception
 	 */
@@ -75,7 +74,6 @@ public interface ICNSSubscriptionPersistence {
 	 * @param nextToken initially null, on subsequent calls arn of last result from prior call
 	 * @param topicArn topic arn 
 	 * @param protocol optional filter by protocol (this parameter is not part of official AWS API)
-	 * @param userId user id
 	 * @return list of subscriptions
 	 * @throws Exception
 	 */
@@ -86,7 +84,6 @@ public interface ICNSSubscriptionPersistence {
 	 * @param nextToken initially null, on subsequent calls arn of last result from prior call
 	 * @param topicArn topic arn 
 	 * @param protocol optional filter by protocol (this parameter is not part of official AWS API)
-	 * @param userId user id
 	 * @param pageSize maximum number of subscriptions to return
 	 * @return list of subscriptions
 	 * @throws Exception
@@ -98,7 +95,6 @@ public interface ICNSSubscriptionPersistence {
 	 * @param nextToken initially null, on subsequent calls arn of last result from prior call
 	 * @param topicArn topic arn
 	 * @param protocol optional filter by protocol (this parameter is not part of official AWS API)
-	 * @param userId user id
 	 * @return list of subscriptions
 	 * @throws Exception
 	 */
@@ -109,7 +105,6 @@ public interface ICNSSubscriptionPersistence {
 	 * @param authenticateOnUnsubscribe define if unsubscribe will require authentication
 	 * @param token token from confirmation request
 	 * @param topicArn topic arn
-	 * @param userId user id
 	 * @return subscription
 	 * @throws Exception
 	 */

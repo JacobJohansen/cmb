@@ -15,16 +15,6 @@
  */
 package com.comcast.cns.persistence;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
@@ -33,8 +23,13 @@ import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.util.Util;
+import org.apache.log4j.Logger;
+
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class supports caching of the subinfo in memory
@@ -162,7 +157,7 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         public CachePopulator(String topicArn) {
             this.topicArn = topicArn;
         }
-        @Override
+
         public LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> call() throws Exception {
             long ts1 = System.currentTimeMillis();
             ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();

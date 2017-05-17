@@ -15,83 +15,19 @@
  */
 package com.comcast.cns.model;
 
-import java.util.Date;
-import java.util.UUID;
-import java.util.regex.Matcher;
-
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.Util;
+
+import java.util.Date;
+import java.util.UUID;
 
 
 /**
  * Represents a Subscription
- * @author bwolf, jorge
  *
  * Class is not thread-safe. Caller must ensure thread safety
  */
 public class CNSSubscription {
-
-    public enum CnsSubscriptionProtocol { http, https, email, email_json, cqs, sqs, redis;
-    
-    
-    /**
-     * 
-     * @return true if this protocol supports subscription confirmation
-     */
-    
-    public boolean canConfirmSubscription() {
-    	switch (this) {
-    	case redis:
-    		return false;
-    	default: 
-    		return true;
-    	}
-    }
-    
-    /**
-     * 
-     * @param endpoint
-     * @return true if endpoint is correctly formatted given the protocol
-     */
-    public boolean isValidEnpoint(String endpoint) {
-
-        switch (this) { 
-
-        case https:
-            if (!endpoint.substring(0, 8).equals("https://")) {
-                return false;
-            } 
-            break;
-        case http: 
-            if (!endpoint.substring(0, 7).equals("http://")) {
-                return false;
-            }
-            break;
-        case email:
-        case email_json:
-            if (!endpoint.contains("@")) {
-                return false;
-            }
-            break;
-        case redis:
-        	Matcher m = com.comcast.cns.util.Util.redisPubSubPattern.matcher(endpoint);
-        	return m.matches();
-        case sqs:
-            if (!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
-                return false;
-            }
-            break;
-        case cqs:
-            if (!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
-                return false;
-            }
-            break;
-        } 
-        return true;
-    }
-    };
-
 	private String arn;
 	private String topicArn;
 	private String userId;
@@ -203,8 +139,23 @@ public class CNSSubscription {
 		this.authenticateOnUnsubscribe = authenticateOnUnsubscribe;
 	}
 
-	public boolean isTokenExpired() {
+	public CNSSubscriptionDeliveryPolicy getDeliveryPolicy() {
+		return deliveryPolicy;
+	}
 
+	public void setDeliveryPolicy(CNSSubscriptionDeliveryPolicy deliveryPolicy) {
+		this.deliveryPolicy = deliveryPolicy;
+	}
+
+	public Boolean getRawMessageDelivery() {
+		return rawMessageDelivery;
+	}
+
+	public void setRawMessageDelivery(Boolean rawMessageDelivery) {
+		this.rawMessageDelivery = rawMessageDelivery;
+	}
+
+	public boolean isTokenExpired() {
 		if ((new Date()).getTime() - getRequestDate().getTime() > 3 * 24 * 60 * 60 * 1000) {
 			return true;
 		}
@@ -264,44 +215,41 @@ public class CNSSubscription {
 				" rawMessageDelivery=" + getRawMessageDelivery();
 	}
 
-	@Override
-	public boolean equals(Object o) {
+	@Override public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof CNSSubscription)) return false;
 
-		if (!(o instanceof CNSSubscription)) {
+		CNSSubscription that = (CNSSubscription) o;
+
+		if (confirmed != that.confirmed) return false;
+		if (authenticateOnUnsubscribe != that.authenticateOnUnsubscribe) return false;
+		if (arn != null ? !arn.equals(that.arn) : that.arn != null) return false;
+		if (topicArn != null ? !topicArn.equals(that.topicArn) : that.topicArn != null) return false;
+		if (userId != null ? !userId.equals(that.userId) : that.userId != null) return false;
+		if (protocol != that.protocol) return false;
+		if (endpoint != null ? !endpoint.equals(that.endpoint) : that.endpoint != null) return false;
+		if (requestDate != null ? !requestDate.equals(that.requestDate) : that.requestDate != null) return false;
+		if (confirmDate != null ? !confirmDate.equals(that.confirmDate) : that.confirmDate != null) return false;
+		if (token != null ? !token.equals(that.token) : that.token != null) return false;
+		if (deliveryPolicy != null ? !deliveryPolicy.equals(that.deliveryPolicy) : that.deliveryPolicy != null)
 			return false;
-		}
-
-		CNSSubscription s = (CNSSubscription)o;
-
-		if (Util.isEqual(getArn(), s.getArn()) &&
-				Util.isEqual(getTopicArn(), s.getTopicArn()) &&
-				Util.isEqual(getUserId(), s.getUserId()) &&
-				Util.isEqual(getProtocol(), s.getProtocol()) &&
-				Util.isEqual(getEndpoint(), s.getEndpoint()) &&
-				Util.isEqual(getRequestDate(), s.getRequestDate()) &&
-				Util.isEqual(getConfirmDate(), s.getConfirmDate()) &&
-				Util.isEqual(isConfirmed(), s.isConfirmed()) &&
-				Util.isEqual(getToken(), s.getToken()) &&
-				Util.isEqual(getRawMessageDelivery(), s.getRawMessageDelivery())) {
-			return true;
-		}
-
-		return false;
+		return rawMessageDelivery != null ? rawMessageDelivery.equals(that.rawMessageDelivery) : that
+			.rawMessageDelivery == null;
 	}
 
-	public CNSSubscriptionDeliveryPolicy getDeliveryPolicy() {
-		return deliveryPolicy;
-	}
-
-	public void setDeliveryPolicy(CNSSubscriptionDeliveryPolicy deliveryPolicy) {
-		this.deliveryPolicy = deliveryPolicy;
-	}
-
-	public Boolean getRawMessageDelivery() {
-		return rawMessageDelivery;
-	}
-
-	public void setRawMessageDelivery(Boolean rawMessageDelivery) {
-		this.rawMessageDelivery = rawMessageDelivery;
+	@Override public int hashCode() {
+		int result = arn != null ? arn.hashCode() : 0;
+		result = 31 * result + (topicArn != null ? topicArn.hashCode() : 0);
+		result = 31 * result + (userId != null ? userId.hashCode() : 0);
+		result = 31 * result + (protocol != null ? protocol.hashCode() : 0);
+		result = 31 * result + (endpoint != null ? endpoint.hashCode() : 0);
+		result = 31 * result + (requestDate != null ? requestDate.hashCode() : 0);
+		result = 31 * result + (confirmDate != null ? confirmDate.hashCode() : 0);
+		result = 31 * result + (confirmed ? 1 : 0);
+		result = 31 * result + (token != null ? token.hashCode() : 0);
+		result = 31 * result + (authenticateOnUnsubscribe ? 1 : 0);
+		result = 31 * result + (deliveryPolicy != null ? deliveryPolicy.hashCode() : 0);
+		result = 31 * result + (rawMessageDelivery != null ? rawMessageDelivery.hashCode() : 0);
+		return result;
 	}
 }

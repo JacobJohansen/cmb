@@ -15,20 +15,6 @@
  */
 package com.comcast.cns.persistence;
 
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONWriter;
-
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
@@ -41,11 +27,19 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSTopic;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.model.CQSQueue;
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONWriter;
+
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.*;
 
 /**
  * 
@@ -239,8 +233,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
         cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
 	}
-	
-	@Override
+
 	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) throws Exception {
 		
 		// subscription is unique by protocol + endpoint + topic
@@ -342,7 +335,6 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		return subscription;
 	}
 
-	@Override
 	public CNSSubscription getSubscription(String arn) throws Exception {
 		
 	    //read form index to get composite col-name
@@ -422,7 +414,6 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         return sub;
 	}*/
 
-    @Override
     /**
      * List all subscription for a user, unconfirmed subscriptions will not reveal their arns. Pagination for more than 100 subscriptions.
      * @param nextToken initially null, on subsequent calls arn of last result from prior call
@@ -509,17 +500,14 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		return l;
 	}
 
-	@Override
 	public List<CNSSubscription> listAllSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId) throws Exception {
 	    return listSubscriptions(nextToken, protocol, userId, false);
 	}
 
-	@Override
 	public List<CNSSubscription> listSubscriptionsByTopic(String nextToken, String topicArn, CnsSubscriptionProtocol protocol) throws Exception {
 		return listSubscriptionsByTopic(nextToken, topicArn, protocol, 100);
 	}
-	
-	@Override
+
 	public List<CNSSubscription> listSubscriptionsByTopic(String nextToken, String topicArn, CnsSubscriptionProtocol protocol, int pageSize) throws Exception {
 	    return listSubscriptionsByTopic(nextToken, topicArn, protocol, pageSize, true);
 	}
@@ -622,12 +610,10 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		return l;
 	}
 
-	@Override
 	public List<CNSSubscription> listAllSubscriptionsByTopic(String nextToken, String topicArn, CnsSubscriptionProtocol protocol) throws Exception {
 	      return listSubscriptionsByTopic(nextToken, topicArn, protocol, 100, false);
 	}
 
-	@Override
 	public CNSSubscription confirmSubscription(boolean authenticateOnUnsubscribe, String token, String topicArn) throws Exception {
 		
 	    //get Sub-arn given token
@@ -679,8 +665,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userId, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, token, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
-	
-	@Override
+
 	public void unsubscribe(String arn) throws Exception {
 
 		CNSSubscription s = getSubscription(arn);
@@ -705,7 +690,6 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		return cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 
-    @Override
     public void unsubscribeAll(String topicArn) throws Exception {
     	
     	int pageSize=1000;
@@ -750,7 +734,6 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
     }
 
-	@Override
 	public void setRawMessageDelivery(String subscriptionArn, boolean rawMessageDelivery) throws Exception{
 		CNSSubscription sub;
 		sub = getSubscription(subscriptionArn);

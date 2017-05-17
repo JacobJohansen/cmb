@@ -26,8 +26,6 @@ public class CNSSubscriptionAttributes {
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
-	
-	
 
 	private String userId;
 	
@@ -37,17 +35,15 @@ public class CNSSubscriptionAttributes {
 	
 	private String subscriptionArn;
 	
-	public CNSSubscriptionAttributes() {
-	}
+	public CNSSubscriptionAttributes() {}
 	
 	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, String userId) {
-		
 		this.topicArn = topicArn;
 		this.subscriptionArn = subscriptionArn;
 		this.userId = userId;
-		this.deliveryPolicy = null;//new CNSSubscriptionDeliveryPolicy();
+		this.deliveryPolicy = null;
 	}
-	
+
 	public CNSSubscriptionDeliveryPolicy getEffectiveDeliveryPolicy() {
 		return effectiveDeliveryPolicy;
 	}
@@ -95,7 +91,7 @@ public class CNSSubscriptionAttributes {
 	public void setSubscriptionArn(String subscriptionArn) {
 		this.subscriptionArn = subscriptionArn;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "user_id=" + userId + " topci_arn=" + topicArn + " subscription_arn=" + subscriptionArn + 

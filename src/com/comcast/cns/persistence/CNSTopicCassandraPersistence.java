@@ -15,11 +15,6 @@
  */
 package com.comcast.cns.persistence;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
@@ -35,8 +30,12 @@ import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.util.CQSErrorCodes;
-
 import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provide Cassandra persistence for topics
@@ -77,7 +76,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return columnValues;
 	}	
 
-	@Override
 	public CNSTopic createTopic(String name, String displayName, String userId) throws Exception {
 
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
@@ -140,7 +138,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		}
 	}
 
-	@Override
 	public void deleteTopic(String arn) throws Exception {
 
 		CNSTopic topic = getTopic(arn);
@@ -164,8 +161,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		
 		CNSCache.removeTopic(arn);
 	}
-	
-	@Override
+
 	public long getNumberOfTopicsByUser(String userId) throws PersistenceException {
 		
 		if (userId == null || userId.trim().length() == 0) {
@@ -194,7 +190,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return numTopics;
 	}
 
-	@Override
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception {
 
 		if (nextToken != null) {
@@ -238,7 +233,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return topics;
 	}
 
-	@Override
 	public CNSTopic getTopic(String arn) throws Exception {
 
 		CNSTopic topic = null;
@@ -260,7 +254,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return topic;
 	}
 
-	@Override
 	public void updateTopicDisplayName(String arn, String displayName) throws Exception {
 
 		CNSTopic topic = getTopic(arn);
