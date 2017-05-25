@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.model;
 
+import com.comcast.cmb.common.persistence.ICassandraPaging;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 
@@ -27,10 +28,10 @@ import java.util.UUID;
  *
  * Class is not thread-safe. Caller must ensure thread safety
  */
-public class CNSSubscription {
+public class CNSSubscription implements ICassandraPaging {
 	private String arn;
 	private String topicArn;
-	private String userId;
+	private UUID userId;
 	private CnsSubscriptionProtocol protocol;
 	private String endpoint;
 	private Date requestDate;
@@ -40,8 +41,13 @@ public class CNSSubscription {
 	private boolean authenticateOnUnsubscribe;
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
 	private Boolean rawMessageDelivery = false;
+	private String nextPage;
 
-	public CNSSubscription(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) {
+	public CNSSubscription() {
+
+	}
+
+	public CNSSubscription(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, UUID userId) {
 
 		this.endpoint = endpoint;
 		this.protocol = protocol;
@@ -75,11 +81,11 @@ public class CNSSubscription {
 		this.topicArn = topicArn;
 	}
 
-	public String getUserId() {
+	public UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 
@@ -162,7 +168,15 @@ public class CNSSubscription {
 
 		return false;
 	}
-	
+
+	public String getNextPage() {
+		return nextPage;
+	}
+
+	public void setNextPage(String nextPage) {
+		this.nextPage = nextPage;
+	}
+
 	/**
 	 * Verify this instance of subscription
 	 * @throws CMBException if not valid

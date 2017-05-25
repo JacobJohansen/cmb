@@ -85,7 +85,7 @@ public class CNSRemovePermissionAction extends CNSAction {
             
         	if (policy.removeStatement(label)) {
             	attributes.setPolicy(policy.toString());
-        		PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, topicArn);
+        		PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(attributes, topicArn);
             }
         }
         

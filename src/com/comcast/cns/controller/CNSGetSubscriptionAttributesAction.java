@@ -56,7 +56,7 @@ public class CNSGetSubscriptionAttributesAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
     	}	
     	
-    	CNSSubscriptionAttributes attr = PersistenceFactory.getCNSAttributePersistence().getSubscriptionAttributes(subscriptionArn);
+    	CNSSubscriptionAttributes attr = PersistenceFactory.getCNSSubscriptionAttributePersistence().getSubscriptionAttributes(subscriptionArn);
     	CNSSubscription sub = PersistenceFactory.getSubscriptionPersistence().getSubscription(subscriptionArn);
     	String out = CNSAttributePopulator.getGetSubscriptionAttributesResponse(sub, attr);
 

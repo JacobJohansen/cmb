@@ -15,6 +15,8 @@
  */
 package com.comcast.cns.model;
 
+import java.util.UUID;
+
 /**
  * represents topic attributes
  * @author bwolf, jorge
@@ -27,7 +29,7 @@ public class CNSTopicAttributes {
 	
 	private CNSTopicDeliveryPolicy deliveryPolicy;
 
-	private String userId;
+	private UUID userId;
 	
 	private long subscriptionsPending;
 	
@@ -46,8 +48,7 @@ public class CNSTopicAttributes {
 	public CNSTopicAttributes() {
 	}
 	
-	public CNSTopicAttributes(String topicArn, String userId) {
-
+	public CNSTopicAttributes(String topicArn, UUID userId) {
 		this.topicArn = topicArn;
 		this.userId = userId;
 		this.deliveryPolicy = new CNSTopicDeliveryPolicy();
@@ -72,11 +73,11 @@ public class CNSTopicAttributes {
 		this.deliveryPolicy = deliveryPolicy;
 	}
 
-	public String getUserId() {
+	public UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 

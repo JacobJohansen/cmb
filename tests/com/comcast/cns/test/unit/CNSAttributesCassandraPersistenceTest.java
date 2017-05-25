@@ -34,7 +34,7 @@ import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.model.CNSTopicDeliveryPolicy;
 import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.persistence.CNSAttributesCassandraPersistence;
+import com.comcast.cns.persistence.CNSSubscriptionAttributesCassandraPersistence;
 import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
 import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
 
@@ -51,7 +51,7 @@ public class CNSAttributesCassandraPersistenceTest {
     private Random rand = new Random();
     private CNSTopic topic = null;
     private CNSSubscription subscription = null;
-	private CNSAttributesCassandraPersistence attributeHandler = null;
+	private CNSSubscriptionAttributesCassandraPersistence attributeHandler = null;
 
     @Before
     public void setup() throws Exception {
@@ -69,7 +69,7 @@ public class CNSAttributesCassandraPersistenceTest {
 
 		topicHandler = new CNSTopicCassandraPersistence();
 		subscriptionHandler = new CNSSubscriptionCassandraPersistence();
-		attributeHandler = new CNSAttributesCassandraPersistence();
+		attributeHandler = new CNSSubscriptionAttributesCassandraPersistence();
 
 		String topicName = "T" + rand.nextLong();
 		topic = topicHandler.createTopic(topicName, topicName, user.getUserId());

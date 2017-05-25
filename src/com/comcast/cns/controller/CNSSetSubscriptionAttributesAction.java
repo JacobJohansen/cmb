@@ -83,7 +83,7 @@ public class CNSSetSubscriptionAttributesAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}
     	
-    	PersistenceFactory.getCNSAttributePersistence().setSubscriptionAttributes(subscriptionAttributes, subscriptionArn);
+    	PersistenceFactory.getCNSSubscriptionAttributePersistence().setSubscriptionAttributes(subscriptionAttributes, subscriptionArn);
     	
     	String out = CNSAttributePopulator.getSetSubscriptionAttributesResponse();
     	logger.debug("event=cns_set_subscription_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);

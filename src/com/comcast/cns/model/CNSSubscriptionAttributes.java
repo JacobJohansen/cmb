@@ -15,19 +15,15 @@
  */
 package com.comcast.cns.model;
 
-/**
- * represents Subscription Attributes
- * @author bwolf, jorge
- *
- * Class is not thread-safe. Caller must ensure thread-safety
- */
+import java.util.UUID;
+
 public class CNSSubscriptionAttributes {
 	
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
 
-	private String userId;
+	private UUID userId;
 	
 	private boolean confirmationWasAuthenticated;
 	
@@ -37,7 +33,7 @@ public class CNSSubscriptionAttributes {
 	
 	public CNSSubscriptionAttributes() {}
 	
-	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, String userId) {
+	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, UUID userId) {
 		this.topicArn = topicArn;
 		this.subscriptionArn = subscriptionArn;
 		this.userId = userId;
@@ -60,11 +56,11 @@ public class CNSSubscriptionAttributes {
 		this.deliveryPolicy = deliveryPolicy;
 	}
 
-	public String getUserId() {
+	public UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 

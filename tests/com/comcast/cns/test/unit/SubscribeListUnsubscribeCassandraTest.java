@@ -39,7 +39,7 @@ import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
 import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
-import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
 
@@ -118,7 +118,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 	public void testSubscribeListUnsubsribeTopic() {
 
 		ICNSTopicPersistence topicHandler = new CNSTopicCassandraPersistence();
-		ICNSAttributesPersistence attributeHandler = PersistenceFactory.getCNSAttributePersistence();
+		ICNSSubscriptionAttributesPersistence attributeHandler = PersistenceFactory.getCNSSubscriptionAttributePersistence();
 		
 		String topicArn = null;
 

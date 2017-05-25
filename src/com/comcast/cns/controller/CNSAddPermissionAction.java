@@ -138,7 +138,7 @@ public class CNSAddPermissionAction extends CNSAction {
 
         if (policy.addStatement(CMBPolicy.SERVICE.CNS, label, "Allow", userList, actionList, topicArn, null)) {
         	attributes.setPolicy(policy.toString());
-        	PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, topicArn);
+        	PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(attributes, topicArn);
         } else {
         	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value " + label + " for parameter Label is invalid. Reason: Already exists.");
         }

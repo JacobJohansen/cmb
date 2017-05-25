@@ -26,7 +26,7 @@ import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
-import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
 
@@ -37,7 +37,7 @@ import com.comcast.cns.persistence.ICNSTopicPersistence;
 public class CNSCache {
 	
     private static volatile ExpiringCache<String, CNSTopicAttributes> attributeCache = new ExpiringCache<String, CNSTopicAttributes>(CMBProperties.getInstance().getCNSCacheSizeLimit());
-	private static volatile ICNSAttributesPersistence attributeHandler = PersistenceFactory.getCNSAttributePersistence();
+	private static volatile ICNSSubscriptionAttributesPersistence attributeHandler = PersistenceFactory.getCNSSubscriptionAttributePersistence();
 
     private static volatile ExpiringCache<String, List<CNSSubscription>> confirmedSubscriptionsCache = new ExpiringCache<String, List<CNSSubscription>>(CMBProperties.getInstance().getCNSCacheSizeLimit());
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();

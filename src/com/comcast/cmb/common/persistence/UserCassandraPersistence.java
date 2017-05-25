@@ -16,22 +16,124 @@
 package com.comcast.cmb.common.persistence;
 
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.model.UserAccessor;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.util.CQSErrorCodes;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
-public class UserCassandraPersistence implements IUserPersistence {
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+
+public class UserCassandraPersistence extends BaseCassandraDao<User> implements IUserPersistence {
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);
-	
 	private static final CassandraDataStaxPersistence cassandraDataStaxPersistence = DurablePersistenceFactory.getInstance();
-	UserAccessor userDao;
+
+	private final String CMB_KEYSPACE = "CMB";
+	private final String USER_BY_ID = "Users";
+	private final String USERID_BY_ACCESSKEY = "userIdsByAccessKey";
+	private final String USERID_BY_NAME = "UserIdByName";
+
+
+	private final PreparedStatement saveUser;
+	private final PreparedStatement saveUserByAccessKey;
+	private final PreparedStatement saveUserByName;
+
+	private final PreparedStatement findUserById;
+	private final PreparedStatement findUserByName;
+	private final PreparedStatement findUserByAccessKey;
+	private final PreparedStatement findAll;
+
+	private final PreparedStatement deleteUserById;
+	private final PreparedStatement deleteUserByAccessKey;
+	private final PreparedStatement deleteUserByName;
+
+
+
 	public UserCassandraPersistence() {
-		userDao = cassandraDataStaxPersistence.getMappingManager().createAccessor(UserAccessor.class);
+		super(cassandraDataStaxPersistence.getSession());
+
+		saveUser = session.prepare(
+			QueryBuilder.insertInto(CMB_KEYSPACE, USER_BY_ID)
+						.value("userId", bindMarker("userId"))
+						.value("userName", bindMarker("userName"))
+						.value("hashedPassword", bindMarker("hashedPassword"))
+						.value("accessKey", bindMarker("accessKey"))
+						.value("accessSecret", bindMarker("accessSecret"))
+						.value("isAdmin", bindMarker("isAdmin"))
+						.value("description", bindMarker("description"))
+		);
+
+		saveUserByAccessKey = session.prepare(
+			QueryBuilder.insertInto(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
+						.value("userId", bindMarker("userId"))
+						.value("accessKey", bindMarker("accessKey"))
+						.value("accessSecret", bindMarker("accessSecret"))
+		);
+
+		saveUserByName = session.prepare(
+			QueryBuilder.insertInto(CMB_KEYSPACE, USERID_BY_NAME)
+						.value("userId", bindMarker("userId"))
+						.value("userName", bindMarker("userName"))
+						.value("hashedPassword", bindMarker("hashedPassword"))
+		);
+
+		deleteUserById = session.prepare(
+			QueryBuilder.delete()
+						.from(CMB_KEYSPACE, USER_BY_ID)
+						.where(eq("userId", bindMarker("userId")))
+		);
+
+		deleteUserByName = session.prepare(
+			QueryBuilder.delete()
+						.from(CMB_KEYSPACE, USERID_BY_NAME)
+						.where(eq("userName", bindMarker("userName")))
+		);
+
+		deleteUserByAccessKey = session.prepare(
+			QueryBuilder.delete()
+						.from(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
+						.where(eq("accessKey", bindMarker("accessKey")))
+		);
+
+		findUserById = session.prepare(
+			QueryBuilder.select()
+						.all()
+						.from(CMB_KEYSPACE, USER_BY_ID)
+						.where(eq("userId", bindMarker("userId")))
+						.limit(1)
+		);
+
+		findUserByAccessKey = session.prepare(
+			QueryBuilder.select()
+						.all()
+						.from(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
+						.where(eq("accessKey", bindMarker("accessKey")))
+						.limit(1)
+		);
+
+		findUserByName = session.prepare(
+			QueryBuilder.select()
+						.all()
+						.from(CMB_KEYSPACE, USERID_BY_NAME)
+						.where(eq("userName", bindMarker("userName")))
+						.limit(1)
+		);
+
+		findAll = session.prepare(
+			QueryBuilder.select()
+						.all()
+						.from(CMB_KEYSPACE, USER_BY_ID)
+		);
+
 	}
 
 
@@ -77,20 +179,59 @@ public class UserCassandraPersistence implements IUserPersistence {
 		}
 
 		user = new User(userId, userName, hashedPassword, accessKey, accessSecret, isAdmin, description);
-		userDao.save(user);
-		userDao.saveAccessKeyByById(user);
-		userDao.saveUserIdByName(user);
-		
+
+		saveUser(user);
 		return user;
 		
 	}
 
+	private void saveUser(User user) {
+		save(Lists.newArrayList(upsertUser(user), upsertAcessKeyByUserId(user), upsertUserIdByName(user)));
+	}
+
+	private BoundStatement upsertUser(User user) {
+		return saveUser.bind()
+					   .setUUID("userId", user.getUserId())
+					   .setString("userName", user.getUserName())
+					   .setString("hashedPassword", user.getHashedPassword())
+					   .setString("accessKey", user.getAccessKey())
+					   .setString("accessSecret", user.getAccessSecret())
+					   .setBool("isAdmin", user.getAdmin())
+					   .setString("description", user.getDescription());
+	}
+
+	private BoundStatement upsertAcessKeyByUserId(User user) {
+		return saveUserByAccessKey.bind()
+						 		  .setString("accessKey", user.getAccessKey())
+								  .setString("accessSecret", user.getAccessSecret())
+								  .setUUID("userId", user.getUserId());
+	}
+
+	private BoundStatement upsertUserIdByName(User user) {
+		return saveUserByName.bind()
+							 .setString("userName", user.getUserName())
+							 .setString("hashedPassword", user.getHashedPassword())
+							 .setUUID("userId", user.getUserId());
+	}
+
 	public void deleteUser(String userName) {
 		User user = getUserByName(userName);
+		save(Lists.newArrayList(deleteUserByAccessKey(user), deleteUserById(user), deleteUserIdByName(user)));
+	}
 
-		userDao.deleteAccessKeyByById(user.getAccessKey());
-		userDao.deleteUserIdByName(user.getUserName());
-		userDao.delete(user.getUserId());
+	private BoundStatement deleteUserIdByName(User user) {
+		return deleteUserByName.bind()
+								.setString("userName", user.getUserName());
+	}
+
+	private BoundStatement deleteUserById(User user) {
+		return deleteUserById.bind()
+							 .setUUID("userId", user.getUserId());
+	}
+
+	private BoundStatement deleteUserByAccessKey(User user) {
+		return deleteUserByAccessKey.bind()
+									.setString("accessKey", user.getAccessKey());
 	}
 
 	public long getNumUserQueues(String userId) throws PersistenceException {
@@ -102,7 +243,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	}
 
 	public User getUserById(UUID userId) {
-		User user = userDao.find(userId);
+		User user = findOne(findUserById.bind().setUUID("userId", userId));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -110,24 +251,23 @@ public class UserCassandraPersistence implements IUserPersistence {
 	}
 
 	public User getUserByName(String userName) {
-		User user = userDao.findUserIdByName(userName);
+		User user = findOne(findUserByName.bind().setString("userName", userName));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
-		user = userDao.find(user.getUserId());
+		user = findOne(findUserById.bind().setUUID("userId", user.getUserId()));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
 		return user;
 	}
 
-
 	public User getUserByAccessKey(String accessKey) {
-		User user = userDao.findAccessKeyByById(accessKey);
+		User user = findOne(findUserByAccessKey.bind().setString("accessKey", accessKey));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
-		user = userDao.find(user.getUserId());
+		user = findOne(findUserById.bind().setUUID("userId", user.getUserId()));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -136,12 +276,50 @@ public class UserCassandraPersistence implements IUserPersistence {
 	}
 
 	public List<User> getAllUsers() {
-		return userDao.findAll().all();
+		return find(Lists.newArrayList(findAll.bind()));
 	}
 
 	public User createDefaultUser() throws PersistenceException {
 		return createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword(), true);
 	}
 
+	@Override protected User convertToInstance(Row row) {
+		UUID userId = row.getUUID("userId");
+
+
+		String userName = null;
+		String hashedPassword = null;
+		String accessKey = null;
+		String accessSecret = null;
+		Boolean isAdmin = null;
+		String description = null;
+
+
+		if(row.getColumnDefinitions().contains("userName")) {
+			userName = row.getString("userName");
+		}
+
+		if(row.getColumnDefinitions().contains("hashedPassword")) {
+			hashedPassword = row.getString("hashedPassword");
+		}
+
+		if(row.getColumnDefinitions().contains("accessKey")) {
+			accessKey = row.getString("accessKey");
+		}
+
+		if(row.getColumnDefinitions().contains("accessSecret")) {
+			accessSecret = row.getString("accessSecret");
+		}
+
+		if(row.getColumnDefinitions().contains("isAdmin")) {
+			isAdmin = row.getBool("isAdmin");
+		}
+
+		if(row.getColumnDefinitions().contains("description")) {
+			description = row.getString("description");
+		}
+
+		return new User(userId, userName, hashedPassword, accessKey, accessSecret, isAdmin, description);
+	}
 }
 

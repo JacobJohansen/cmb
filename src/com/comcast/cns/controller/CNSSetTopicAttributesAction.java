@@ -117,7 +117,7 @@ public class CNSSetTopicAttributesAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}
     	
-    	PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
+    	PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
     	String out = CNSAttributePopulator.getSetTopicAttributesResponse();
     	logger.debug("event=cns_set_topic_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
         writeResponse(out, response);

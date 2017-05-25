@@ -15,6 +15,13 @@
  */
 package com.comcast.cns.util;
 
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
+import org.json.JSONWriter;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -23,16 +30,8 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
-import org.json.JSONWriter;
-
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cns.model.CNSMessage;
-import com.comcast.cns.model.CNSMessage.CNSMessageType;
-import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import java.util.regex.Pattern;
 
 /**
  * Utility functions for cns
@@ -138,7 +137,7 @@ public class Util {
 	
 	/**
      * Generate the confirmation Json string
-     * @param arn The top arn for the topic the user is subscribing to.
+     * @param topicArn The top arn for the topic the user is subscribing to.
      * @param token the token for confirming the subscription
      * @return the Json String 
      */
@@ -176,12 +175,11 @@ public class Util {
     
     /**
      * Generate the Json message to send to all the endpoints except email
-     * @param arn The topic arn for the topic the user is subscribing to.
-     * @param message the message to send
-     * @param subject the subject to send, also included as the subject in email-json
+     * @param cnsMessage the message to send
+     * @param protocol the subject to send, also included as the subject in email-json
      * @return the Json String 
      */
-    public static String generateMessageJson(CNSMessage cnsMessage, CnsSubscriptionProtocol prot) {
+    public static String generateMessageJson(CNSMessage cnsMessage, CnsSubscriptionProtocol protocol) {
 
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
@@ -190,7 +188,7 @@ public class Util {
         String timestamp = df.format(cnsMessage.getTimestamp());
         
     	try {
-    		String message = cnsMessage.getProtocolSpecificMessage(prot);
+    		String message = cnsMessage.getProtocolSpecificMessage(protocol);
 	    	jw = jw.object();
 	    	jw.key("Message").value(message);
 	    	jw.key("MessageId").value(cnsMessage.getMessageId());

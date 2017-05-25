@@ -32,17 +32,16 @@ CREATE TABLE "CNSAPIServers" (
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
 CREATE TABLE "CNSSubscriptionAttributes" (
-  key text,
-  "confirmationWasAuthenticated" text,
+  "subscriptionArn" text,
+  "confirmationWasAuthenticated" boolean,
   "deliveryPolicy" text,
   "effectiveDeliveryPolicy" text,
   "topicArn" text,
-  "userId" text,
-  PRIMARY KEY ((key))
+  "userId" UUID,
+  PRIMARY KEY (("subscriptionArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -60,11 +59,11 @@ CREATE TABLE "CNSSubscriptionAttributes" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicAttributes" (
-  key text,
+  "topicArn" text,
   "effectiveDeliveryPolicy" text,
-  policy text,
-  "userId" text,
-  PRIMARY KEY ((key))
+  "policy" text,
+  "userId" UUID,
+  PRIMARY KEY (("topicArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -82,10 +81,10 @@ CREATE TABLE "CNSTopicAttributes" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicStats" (
-  key text,
-  column1 text,
-  value counter,
-  PRIMARY KEY ((key), column1)
+  "topicArn" text,
+  "status" text,
+  "value" counter,
+  PRIMARY KEY (("topicArn"), "status")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.010000 AND
   caching='ALL' AND
@@ -103,11 +102,11 @@ CREATE TABLE "CNSTopicStats" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicSubscriptions" (
-  key text,
-  column1 text,
-  column2 text,
-  value text,
-  PRIMARY KEY ((key), column1, column2)
+  "topicArn" text,
+  "endpoint" text,
+  "protocol" text,
+  "subscriptionJson" text,
+  PRIMARY KEY (("topicArn"), "endpoint", "protocol")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='KEYS_ONLY' AND
@@ -125,10 +124,10 @@ CREATE TABLE "CNSTopicSubscriptions" (
   compression={'chunk_length_kb': '64', 'sstable_compression': 'SnappyCompressor'};
 
 CREATE TABLE "CNSTopicSubscriptionsIndex" (
-  key text,
-  column1 text,
-  value text,
-  PRIMARY KEY ((key), column1)
+  "subscriptionArn" text,
+  "endpoint" text,
+  "protocol" text,
+  PRIMARY KEY ((subscriptionArn), endpoint)
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -146,10 +145,10 @@ CREATE TABLE "CNSTopicSubscriptionsIndex" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicSubscriptionsTokenIndex" (
-  key text,
-  column1 text,
-  value text,
-  PRIMARY KEY ((key), column1)
+  "token" text,
+  "subscriptionArn" text,
+  "value" text,
+  PRIMARY KEY (("token"), "subscriptionArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -167,10 +166,10 @@ CREATE TABLE "CNSTopicSubscriptionsTokenIndex" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicSubscriptionsUserIndex" (
-  key text,
-  column1 text,
+  userId UUID,
+  subscriptionArn text,
   value text,
-  PRIMARY KEY ((key), column1)
+  PRIMARY KEY (("userId"), "subscriptionArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='KEYS_ONLY' AND
@@ -191,7 +190,7 @@ CREATE TABLE "CNSTopics" (
   key text,
   "displayName" text,
   name text,
-  "userId" text,
+  "userId" UUID,
   PRIMARY KEY ((key))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -210,10 +209,10 @@ CREATE TABLE "CNSTopics" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicsByUserId" (
-  key text,
-  column1 text,
+  "userId" UUID,
+  "topicArn" text,
   value text,
-  PRIMARY KEY ((key), column1)
+  PRIMARY KEY (("userId"), "topicArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -304,7 +303,7 @@ CREATE TABLE "CQSQueues" (
   "maxMsgSize" text,
   "msgRetentionPeriod" text,
   name text,
-  "ownerUserId" text,
+  "ownerUserId" UUID,
   policy text,
   region text,
   "visibilityTO" text,
@@ -325,15 +324,11 @@ CREATE TABLE "CQSQueues" (
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'sstable_compression': 'LZ4Compressor'};
 
-CREATE INDEX CQSQueuesArnIdx ON "CQSQueues" (arn);
-
-CREATE INDEX CQSQueuesOwnerUserIdIdx ON "CQSQueues" ("ownerUserId");
-
 CREATE TABLE "CQSQueuesByUserId" (
-  key text,
+  "userId" UUID,
   column1 text,
   value text,
-  PRIMARY KEY ((key), column1)
+  PRIMARY KEY (("userId"), column1)
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='KEYS_ONLY' AND
@@ -349,6 +344,9 @@ CREATE TABLE "CQSQueuesByUserId" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'sstable_compression': 'LZ4Compressor'};
+
+
+
 
 USE "CMB";
 

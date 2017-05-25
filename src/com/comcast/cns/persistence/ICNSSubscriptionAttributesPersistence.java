@@ -16,38 +16,15 @@
 package com.comcast.cns.persistence;
 
 import com.comcast.cns.model.CNSSubscriptionAttributes;
-import com.comcast.cns.model.CNSTopicAttributes;
 
 /**
  * Interface representing persistence functionality for topic attributes
  * @author tina, bwolf
  *
  */
-public interface ICNSAttributesPersistence {
-	
-	/**
-	 * setTopicAttributes
-	 * @param attributeName
-	 * @param attributeValue
-	 * @param topicArn
-	 * @return 
-	 * @throws Exception
-	 */
-	public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception;
-	
-	/**
-	 * getTopicAttributes
-	 * @param topicArn
-	 * @return CNSTopicAttributes
-	 * @throws Exception
-	 */
-	public CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception;
-	
-	
+public interface ICNSSubscriptionAttributesPersistence {
 	/**
 	 * setSubscriptionAttributes
-	 * @param attributeName
-	 * @param attributeValue
 	 * @param subscriptionArn
 	 * @return
 	 * @throws Exception

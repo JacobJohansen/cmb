@@ -32,10 +32,7 @@ import com.comcast.cns.util.Util;
 import com.comcast.cqs.util.CQSErrorCodes;
 import org.apache.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Provide Cassandra persistence for topics
@@ -76,7 +73,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return columnValues;
 	}	
 
-	public CNSTopic createTopic(String name, String displayName, String userId) throws Exception {
+	public CNSTopic createTopic(String name, String displayName, UUID userId) throws Exception {
 
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
 
@@ -132,7 +129,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
-			PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
+			PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(attributes, arn);
 
 			return topic;
 		}

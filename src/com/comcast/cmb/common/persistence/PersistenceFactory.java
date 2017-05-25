@@ -15,16 +15,10 @@
  */
 package com.comcast.cmb.common.persistence;
 
-import com.comcast.cns.persistence.CNSAttributesCassandraPersistence;
-import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
-import com.comcast.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cns.persistence.*;
 import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 
 /**
@@ -40,9 +34,9 @@ public class PersistenceFactory {
 	public static ICNSSubscriptionPersistence cnsSubscriptionPersistence = new CNSSubscriptionCassandraPersistence();
 	public static ICNSTopicPersistence cnsTopicPersistence = new CNSTopicCassandraPersistence();
 	public static IUserPersistence userPersistence = new UserCassandraPersistence();
-	public static ICNSAttributesPersistence cnsAttributePersistence = new CNSAttributesCassandraPersistence(); 
+	public static ICNSSubscriptionAttributesPersistence cnsSubscriptionAttributePersistence = new CNSSubscriptionAttributesCassandraPersistence();
+	public static ICNSTopicAttributesPersistence cnsTopicAttributePersistence = CNSTopicAttributesCassandraPersistence.getInstance();
 	public static ICQSMessagePersistence cqsMessagePersistence = RedisSortedSetPersistence.getInstance();
-	//public static ICQSMessagePersistence cqsMessagePersistence = RedisCachedCassandraPersistence.getInstance();
 	
 	public static IUserPersistence getUserPersistence() {
 		return userPersistence;
@@ -60,8 +54,11 @@ public class PersistenceFactory {
 		return cqsQueuePersistence;
 	}
 		
-	public static ICNSAttributesPersistence getCNSAttributePersistence() {
-	    return cnsAttributePersistence;
+	public static ICNSSubscriptionAttributesPersistence getCNSSubscriptionAttributePersistence() {
+	    return cnsSubscriptionAttributePersistence;
+	}
+	public static ICNSTopicAttributesPersistence getCNSTopicAttributePersistence() {
+		return cnsTopicAttributePersistence;
 	}
 	
 	public static ICQSMessagePersistence getCQSMessagePersistence() {
@@ -76,7 +73,8 @@ public class PersistenceFactory {
 		cnsSubscriptionPersistence = new CNSSubscriptionCassandraPersistence();
 		cnsTopicPersistence = new CNSTopicCassandraPersistence();
 		userPersistence = new UserCassandraPersistence();
-		cnsAttributePersistence = new CNSAttributesCassandraPersistence(); 
+		cnsSubscriptionAttributePersistence = new CNSSubscriptionAttributesCassandraPersistence();
+		cnsTopicAttributePersistence = CNSTopicAttributesCassandraPersistence.getInstance();
 		cqsMessagePersistence = RedisSortedSetPersistence.getInstance();
 	}
 }
