@@ -35,14 +35,17 @@ import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONWriter;
 
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
  * 
@@ -315,7 +318,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 
 	private Statement saveCNSTopicSubscriptionsUserIndex(CNSSubscription subscription, Integer ttl) {
 		return upsertCNSTopicSubscriptionsUserIndex.bind()
-												   .setUUID("userId", subscription.getUserId())
+												   .setString("userId", subscription.getUserId())
 												   .setString("subscriptionArn", subscription.getArn())
 												   .setInt("ttl", ttl);
 	}
@@ -327,7 +330,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 													.setInt("ttl", ttl);
 	}
 
-	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, UUID userId) throws Exception {
+	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) throws Exception {
 
 		// subscription is unique by protocol + endpoint + topic
 
@@ -430,7 +433,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		CNSSubscription s = new CNSSubscription(json.getString("subArn"));
 
 		s.setEndpoint(json.getString("endPoint"));
-		s.setUserId(UUID.fromString(json.getString("userId")));
+		s.setUserId(json.getString("userId"));
 
 		if (json.has("confirmDate")) {
 			s.setConfirmDate(new Date(json.getLong("confirmDate")));
@@ -472,17 +475,17 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	 * @return list of subscriptions. If nextToken is not null, the subscription corresponding to it is not returned.
 	 * @throws Exception
 	 */
-	public List<CNSSubscription> listSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, UUID userId) throws Exception {
+	public List<CNSSubscription> listSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId) throws Exception {
 		return listSubscriptions(nextToken, protocol, userId, true);
 	}
 
-	private List<CNSSubscription> listSubscriptions(String paging, CnsSubscriptionProtocol protocol, UUID userId, boolean hidePendingArn) throws Exception {
+	private List<CNSSubscription> listSubscriptions(String paging, CnsSubscriptionProtocol protocol, String userId, boolean hidePendingArn) throws Exception {
 
 		//Algorithm is to keep reading in chunks of 100 till we've seen 500 from the nextToken-ARN
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
 		List<CNSSubscription> userSubscriptionArnIndex;
 		//read form index to get sub-arn
-		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setUUID("userId", userId), paging, 100);
+		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setString("userId", userId), paging, 100);
 
 		if (userSubscriptionArnIndex == null || userSubscriptionArnIndex.isEmpty()) {
 			return l;
@@ -519,7 +522,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		return l;
 	}
 
-	public List<CNSSubscription> listAllSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, UUID userId) throws Exception {
+	public List<CNSSubscription> listAllSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId) throws Exception {
 		return listSubscriptions(nextToken, protocol, userId, false);
 	}
 
@@ -534,7 +537,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	/**
 	 * Enumerate all subs in a topic
 	 *
-	 * @param nextToken      The ARN of the last sub-returned or null is first time call.
+	 * @param paging      The ARN of the last sub-returned or null is first time call.
 	 * @param topicArn
 	 * @param protocol
 	 * @param pageSize
@@ -620,16 +623,16 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		for (CNSSubscription sub : subscriptionList) {
 			statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscriptionArn", sub.getArn()));
 			statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("token",sub.getToken()).setString("subscriptionArn", sub.getArn()));
-			statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setUUID("userId", sub.getUserId()).setString("subscriptionArn", sub.getArn()));
+			statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("userId", sub.getUserId()).setString("subscriptionArn", sub.getArn()));
 		}
 		save(statements);
 	}
 
-	private void deleteIndexes(String subArn, UUID userId, String token) throws PersistenceException {
+	private void deleteIndexes(String subArn, String userId, String token) throws PersistenceException {
 		List<Statement> statements = Lists.newArrayList();
 		statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscriptionArn", subArn));
 		statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("token", token).setString("subscriptionArn", subArn));
-		statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setUUID("userId", userId).setString("subscriptionArn", subArn));
+		statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("userId", userId).setString("subscriptionArn", subArn));
 		save(statements);
 	}
 
@@ -716,7 +719,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		String subscriptionArn = null;
 		String token = null;
 		String subscriptionJson = null;
-		UUID userId = null;
+		String userId = null;
 		CNSSubscription subscription = null;
 
 		if (row.getColumnDefinitions().contains("topicArn")) {
@@ -744,7 +747,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		}
 
 		if (row.getColumnDefinitions().contains("userId")) {
-			userId = row.getUUID("userId");
+			userId = row.getString("userId");
 		}
 
 

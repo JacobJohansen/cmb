@@ -15,18 +15,12 @@
  */
 package com.comcast.cmb.common.model;
 
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import javax.persistence.Transient;
-import java.util.UUID;
 
-@Table(keyspace = "CMB", name = "Users")
 public class User {
 
 	// system generated user ID, must be globally unique
-    @PartitionKey
-	UUID userId;
+	String userId;
 	
 	// user name, must be globally unique
     private String userName;
@@ -44,15 +38,15 @@ public class User {
     @Transient
 	private long numTopics;
     
-    public User(UUID userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin) {
+    public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin) {
         new User(userId, userName, hashedPassword, accessKey, accessKey, isAdmin, "");
     }
     
-    public User(UUID userId, String userName, String hashedPassword, String accessKey, String accessSecret) {
+    public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret) {
         new User(userId, userName, hashedPassword, accessKey, accessKey, false, "");
     }
     
-    public User(UUID userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin, String description) {
+    public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin, String description) {
         this.userId = userId;
         this.userName = userName;
         this.hashedPassword = hashedPassword;
@@ -62,11 +56,11 @@ public class User {
         this.description = description;
     }
 
-    public UUID getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

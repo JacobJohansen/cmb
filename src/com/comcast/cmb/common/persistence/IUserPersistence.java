@@ -19,7 +19,6 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.PersistenceException;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * interface represents the persistence functionality for a User object 
@@ -46,8 +45,6 @@ public interface IUserPersistence {
     
     /**
      * Create a default user given username, password in CMB properties and admin permission
-     * @param userName
-     * @param password
      * @return User object if successful
      */
     public User createDefaultUser() throws PersistenceException;
@@ -65,7 +62,7 @@ public interface IUserPersistence {
      */
     public List<User> getAllUsers() throws PersistenceException;
     
-    public User getUserById(UUID userId) throws PersistenceException;
+    public User getUserById(String userId) throws PersistenceException;
     public User getUserByName(String userName) throws PersistenceException;
     public User getUserByAccessKey(String accessKey) throws PersistenceException;
 

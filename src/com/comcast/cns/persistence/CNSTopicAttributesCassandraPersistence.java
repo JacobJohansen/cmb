@@ -61,7 +61,7 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
     public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
 
         save(Lists.newArrayList(saveTopicAttribute.bind()
-                                                  .setUUID("userId",topicAttributes.getUserId())
+                                                  .setString("userId",topicAttributes.getUserId())
                                                   .setString("topicArn", topicArn)
                                                   .setString("effectiveDeliveryPolicy", topicAttributes.getEffectiveDeliveryPolicy().toJSON().toString())
                                                   .setString("policy", topicAttributes.getPolicy())
@@ -102,7 +102,7 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
 
     @Override
     protected CNSTopicAttributes convertToInstance(Row row) {
-        CNSTopicAttributes cnsTopicAttributes = new CNSTopicAttributes(row.getString("topicArn"), row.getUUID("userId"));
+        CNSTopicAttributes cnsTopicAttributes = new CNSTopicAttributes(row.getString("topicArn"), row.getString("userId"));
 
         if(row.getColumnDefinitions().contains("policy")) {
             cnsTopicAttributes.setPolicy(row.getString("policy"));

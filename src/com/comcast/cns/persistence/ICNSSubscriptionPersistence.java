@@ -19,7 +19,6 @@ import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CnsSubscriptionProtocol;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Interface representing persistence functionality for subscriptions
@@ -40,7 +39,7 @@ public interface ICNSSubscriptionPersistence {
 	 * @return
 	 * @throws Exception
 	 */
-	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, UUID userId) throws Exception;
+	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) throws Exception;
 	
 	/**
 	 * Get a single subscription object by arn. Not part of official AWS API.
@@ -57,7 +56,7 @@ public interface ICNSSubscriptionPersistence {
 	 * @return list of subscriptions
 	 * @throws Exception
 	 */
-	public List<CNSSubscription> listSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, UUID userId) throws Exception;
+	public List<CNSSubscription> listSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId) throws Exception;
 	
 	/**
 	 * List all subscriptions for a user including unconfirmed subscriptions. Pagination for more than 100 subscriptions. Not part of official AWS API.
@@ -68,7 +67,7 @@ public interface ICNSSubscriptionPersistence {
 	 * @return list of subscriptions
 	 * @throws Exception
 	 */
-	public List<CNSSubscription> listAllSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, UUID userId) throws Exception;
+	public List<CNSSubscription> listAllSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId) throws Exception;
 	
 	/**
 	 * List all active subscriptions for a topic, unconfirmed subscriptions will not reveal their arns. Pagination for more than 100 subscriptions.

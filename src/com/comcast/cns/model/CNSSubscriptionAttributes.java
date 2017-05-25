@@ -15,15 +15,13 @@
  */
 package com.comcast.cns.model;
 
-import java.util.UUID;
-
 public class CNSSubscriptionAttributes {
 	
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
 
-	private UUID userId;
+	private String userId;
 	
 	private boolean confirmationWasAuthenticated;
 	
@@ -33,7 +31,7 @@ public class CNSSubscriptionAttributes {
 	
 	public CNSSubscriptionAttributes() {}
 	
-	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, UUID userId) {
+	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, String userId) {
 		this.topicArn = topicArn;
 		this.subscriptionArn = subscriptionArn;
 		this.userId = userId;
@@ -56,11 +54,11 @@ public class CNSSubscriptionAttributes {
 		this.deliveryPolicy = deliveryPolicy;
 	}
 
-	public UUID getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 
-	public void setUserId(UUID userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 

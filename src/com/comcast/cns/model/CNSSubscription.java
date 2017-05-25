@@ -31,7 +31,7 @@ import java.util.UUID;
 public class CNSSubscription implements ICassandraPaging {
 	private String arn;
 	private String topicArn;
-	private UUID userId;
+	private String userId;
 	private CnsSubscriptionProtocol protocol;
 	private String endpoint;
 	private Date requestDate;
@@ -47,7 +47,7 @@ public class CNSSubscription implements ICassandraPaging {
 
 	}
 
-	public CNSSubscription(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, UUID userId) {
+	public CNSSubscription(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) {
 
 		this.endpoint = endpoint;
 		this.protocol = protocol;
@@ -81,11 +81,11 @@ public class CNSSubscription implements ICassandraPaging {
 		this.topicArn = topicArn;
 	}
 
-	public UUID getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 
-	public void setUserId(UUID userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 

@@ -73,7 +73,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		return columnValues;
 	}	
 
-	public CNSTopic createTopic(String name, String displayName, UUID userId) throws Exception {
+	public CNSTopic createTopic(String name, String displayName, String userId) throws Exception {
 
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
 

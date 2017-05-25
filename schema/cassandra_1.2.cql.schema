@@ -40,7 +40,7 @@ CREATE TABLE "CNSSubscriptionAttributes" (
   "deliveryPolicy" text,
   "effectiveDeliveryPolicy" text,
   "topicArn" text,
-  "userId" UUID,
+  "userId" text,
   PRIMARY KEY (("subscriptionArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -62,7 +62,7 @@ CREATE TABLE "CNSTopicAttributes" (
   "topicArn" text,
   "effectiveDeliveryPolicy" text,
   "policy" text,
-  "userId" UUID,
+  "userId" text,
   PRIMARY KEY (("topicArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -166,7 +166,7 @@ CREATE TABLE "CNSTopicSubscriptionsTokenIndex" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicSubscriptionsUserIndex" (
-  userId UUID,
+  userId text,
   subscriptionArn text,
   value text,
   PRIMARY KEY (("userId"), "subscriptionArn")
@@ -187,11 +187,11 @@ CREATE TABLE "CNSTopicSubscriptionsUserIndex" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopics" (
-  key text,
+  "topicArn" text,
   "displayName" text,
   name text,
-  "userId" UUID,
-  PRIMARY KEY ((key))
+  "userId" text,
+  PRIMARY KEY ((topicArn))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -209,7 +209,7 @@ CREATE TABLE "CNSTopics" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSTopicsByUserId" (
-  "userId" UUID,
+  "userId" text,
   "topicArn" text,
   value text,
   PRIMARY KEY (("userId"), "topicArn")
@@ -303,7 +303,7 @@ CREATE TABLE "CQSQueues" (
   "maxMsgSize" text,
   "msgRetentionPeriod" text,
   name text,
-  "ownerUserId" UUID,
+  "ownerUserId" text,
   policy text,
   region text,
   "visibilityTO" text,
@@ -325,7 +325,7 @@ CREATE TABLE "CQSQueues" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CQSQueuesByUserId" (
-  "userId" UUID,
+  "userId" text,
   column1 text,
   value text,
   PRIMARY KEY (("userId"), column1)
@@ -351,7 +351,7 @@ CREATE TABLE "CQSQueuesByUserId" (
 USE "CMB";
 
 CREATE TABLE "Users" (
-  "userId" UUID,
+  "userId" text,
   "userName" text,
   "accessKey" text,
   "accessSecret" text,
@@ -376,7 +376,7 @@ CREATE TABLE "Users" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "UserIdByName" (
-  "userId" UUID,
+  "userId" text,
   "userName" text,
   "hashPassword" text,
   PRIMARY KEY ((userName))
@@ -397,7 +397,7 @@ CREATE TABLE "UserIdByName" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "userIdsByAccessKey" (
-  "userId" UUID,
+  "userId" text,
   "accessKey" text,
   "accessSecret" text,
   PRIMARY KEY ((accessKey))

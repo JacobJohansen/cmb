@@ -70,7 +70,7 @@ public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandra
 															.setString("deliveryPolicy", subscriptionAtributes.getDeliveryPolicy().toJSON().toString())
 															.setString("effectiveDeliveryPolicy", subscriptionAtributes.getEffectiveDeliveryPolicy().toJSON().toString())
 															.setString("topicArn", subscriptionAtributes.getTopicArn())
-															.setUUID("userId", subscriptionAtributes.getUserId())
+															.setString("userId", subscriptionAtributes.getUserId())
 		));
 
 		String topicArn = com.comcast.cns.util.Util.getCnsTopicArn(subscriptionArn);
@@ -83,7 +83,7 @@ public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandra
 
 	@Override
 	protected CNSSubscriptionAttributes convertToInstance(Row row) {
-		CNSSubscriptionAttributes subscriptionAttributes = new CNSSubscriptionAttributes(row.getString("topicArn"), row.getString("subscriptionArn"), row.getUUID("userId"));
+		CNSSubscriptionAttributes subscriptionAttributes = new CNSSubscriptionAttributes(row.getString("topicArn"), row.getString("subscriptionArn"), row.getString("userId"));
 
 		try {
 			if (row.getColumnDefinitions().contains("confirmationWasAuthenticated") && !row.isNull("confirmationWasAuthenticated")) {

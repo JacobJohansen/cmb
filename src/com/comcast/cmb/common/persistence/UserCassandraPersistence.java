@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 
 import java.util.List;
-import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -167,7 +166,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 			logger.error("event=create_user error_code=user_already_exists user_name=" + userName);
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "User with user name " + userName + " already exists");
 		}
-		UUID userId = UUID.fromString(userName);
+		String userId = Long.toString(System.currentTimeMillis()).substring(1);
 
 		try {
 			hashedPassword = AuthUtil.hashPassword(password);
@@ -191,7 +190,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 	private BoundStatement upsertUser(User user) {
 		return saveUser.bind()
-					   .setUUID("userId", user.getUserId())
+					   .setString("userId", user.getUserId())
 					   .setString("userName", user.getUserName())
 					   .setString("hashedPassword", user.getHashedPassword())
 					   .setString("accessKey", user.getAccessKey())
@@ -204,14 +203,14 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 		return saveUserByAccessKey.bind()
 						 		  .setString("accessKey", user.getAccessKey())
 								  .setString("accessSecret", user.getAccessSecret())
-								  .setUUID("userId", user.getUserId());
+								  .setString("userId", user.getUserId());
 	}
 
 	private BoundStatement upsertUserIdByName(User user) {
 		return saveUserByName.bind()
 							 .setString("userName", user.getUserName())
 							 .setString("hashedPassword", user.getHashedPassword())
-							 .setUUID("userId", user.getUserId());
+							 .setString("userId", user.getUserId());
 	}
 
 	public void deleteUser(String userName) {
@@ -226,7 +225,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 	private BoundStatement deleteUserById(User user) {
 		return deleteUserById.bind()
-							 .setUUID("userId", user.getUserId());
+							 .setString("userId", user.getUserId());
 	}
 
 	private BoundStatement deleteUserByAccessKey(User user) {
@@ -242,8 +241,8 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 		return PersistenceFactory.getTopicPersistence().getNumberOfTopicsByUser(userId);
 	}
 
-	public User getUserById(UUID userId) {
-		User user = findOne(findUserById.bind().setUUID("userId", userId));
+	public User getUserById(String userId) {
+		User user = findOne(findUserById.bind().setString("userId", userId));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -255,7 +254,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
-		user = findOne(findUserById.bind().setUUID("userId", user.getUserId()));
+		user = findOne(findUserById.bind().setString("userId", user.getUserId()));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -267,7 +266,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
-		user = findOne(findUserById.bind().setUUID("userId", user.getUserId()));
+		user = findOne(findUserById.bind().setString("userId", user.getUserId()));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -284,9 +283,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 	}
 
 	@Override protected User convertToInstance(Row row) {
-		UUID userId = row.getUUID("userId");
-
-
+		String userId = row.getString("userId");
 		String userName = null;
 		String hashedPassword = null;
 		String accessKey = null;
