@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.model;
 
+import com.comcast.cmb.common.persistence.ICassandraPaging;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.Util;
@@ -25,12 +26,13 @@ import com.comcast.cmb.common.util.Util;
  *
  * Class is not thread-safe. Caller must ensure thread-safety
  */
-public class CNSTopic {
+public class CNSTopic implements ICassandraPaging {
 	
 	private String arn;
 	private String name;
 	private String displayName;
 	private String userId;
+	private String nextPage;
 	//private CNSTopicAttributes attributes;
 	
 	public CNSTopic(String arn, String name, String displayName, String userId) {
@@ -71,7 +73,17 @@ public class CNSTopic {
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
 	}
-	
+
+	@Override
+	public String getNextPage() {
+		return nextPage;
+	}
+
+	@Override
+	public void setNextPage(String nextPage) {
+		this.nextPage = nextPage;
+	}
+
 	public void checkIsValid() throws CMBException {
 
 		if (arn == null) {

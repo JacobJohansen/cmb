@@ -189,9 +189,9 @@ CREATE TABLE "CNSTopicSubscriptionsUserIndex" (
 CREATE TABLE "CNSTopics" (
   "topicArn" text,
   "displayName" text,
-  name text,
+  "name" text,
   "userId" text,
-  PRIMARY KEY ((topicArn))
+  PRIMARY KEY (("topicArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND

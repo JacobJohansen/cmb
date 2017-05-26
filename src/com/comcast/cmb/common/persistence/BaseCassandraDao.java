@@ -55,6 +55,21 @@ public abstract class BaseCassandraDao <T> {
         return results;
     }
 
+    protected List<T> findAll(Statement statement) {
+        ResultSetFuture resultSetFuture = session.executeAsync(statement);
+
+        while (!resultSetFuture.isDone()){
+            Thread.yield();
+        }
+
+        ResultSet resultSet = resultSetFuture.getUninterruptibly();
+        if (!resultSet.wasApplied()) {
+            throw new RuntimeException("failed to query from cassandra");
+        }
+
+        return resultSet.all().stream().map(this::convertToInstance).collect(Collectors.toList());
+    }
+
     protected List<T> find(Statement statement, String pagingState, Integer pageSize) {
         List<T> results = new ArrayList<>();
         PagingState paging = null;

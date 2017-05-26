@@ -70,9 +70,6 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	private final PreparedStatement upsertCNSTopicSubscriptionsUserIndex;
 	private final PreparedStatement upsertCNSTopicSubscriptionsTokenIndex;
 
-	private final PreparedStatement incrementCounter;
-	private final PreparedStatement decrementCounter;
-
 	private final PreparedStatement selectCNSTopicSubscriptions;
 	private final PreparedStatement selectCNSTopicSubscriptionsIndex;
 	private final PreparedStatement selectCNSTopicSubscriptionsUserIndex;
@@ -116,20 +113,6 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 						.value("token", bindMarker("token"))
 						.value("subscriptionArn", bindMarker("subscriptionArn"))
 						.using(ttl(bindMarker("ttl")))
-		);
-
-		incrementCounter = session.prepare(
-			QueryBuilder.update("CNS", columnFamilyTopicStats)
-						.where(eq("topicArn", bindMarker("topicArn")))
-						.and(eq("status", bindMarker("status")))
-						.with(incr("value", bindMarker("count")))
-		);
-
-		decrementCounter = session.prepare(
-			QueryBuilder.update("CNS", columnFamilyTopicStats)
-						.where(eq("topicArn", bindMarker("topicArn")))
-						.and(eq("status", bindMarker("status")))
-						.with(decr("value", bindMarker("count")))
 		);
 
 		selectCNSTopicSubscriptions = session.prepare(
@@ -194,32 +177,6 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 						.and(eq("subscriptionArn", bindMarker("subscriptionArn")))
 		);
 
-	}
-
-	private void incrementCounter(String topicArn, String status) {
-		incrementCounter(topicArn, status, 1);
-	}
-
-	private void incrementCounter(String topicArn, String status, int count) {
-		save(Lists.newArrayList(
-			incrementCounter.bind()
-							.setString("topicArn", topicArn)
-							.setString("status", status)
-							.setInt("count", count)
-		));
-	}
-
-	private void decrementCounter(String topicArn, String status) {
-		decrementCounter(topicArn, status, 1);
-	}
-
-	private void decrementCounter(String topicArn, String status, int count) {
-		save(Lists.newArrayList(
-			decrementCounter.bind()
-							.setString("topicArn", topicArn)
-							.setString("status", status)
-							.setInt("count", count)
-		));
 	}
 
 	private String getColumnValuesJSON(CNSSubscription s) throws JSONException {
@@ -365,7 +322,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			insertOrUpdateSubsAndIndexes(subscription, null);
 
 			if (retrievedSubscription == null) {
-				incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
+				PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
 			}
 
 		} else {
@@ -389,7 +346,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 
 					insertOrUpdateSubsAndIndexes(subscription, null);
 					if (retrievedSubscription == null) {
-						incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
+						PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
 
 					}
 				} else {
@@ -397,7 +354,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 					// use cassandra ttl to implement expiration after 3 days
 					insertOrUpdateSubsAndIndexes(subscription, 3 * 24 * 60 * 60);
 					if (retrievedSubscription == null) {
-						incrementCounter(subscription.getTopicArn(), "subscriptionPending");
+						PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionPending");
 					}
 				}
 
@@ -406,7 +363,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 				// use cassandra ttl to implement expiration after 3 days 
 				insertOrUpdateSubsAndIndexes(subscription, 3 * 24 * 60 * 60);
 				if (retrievedSubscription == null) {
-					incrementCounter(subscription.getTopicArn(), "subscriptionPending");
+					PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionPending");
 				}
 			}
 		}
@@ -612,8 +569,8 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		//re-insert with no TTL. will clobber the old one which had ttl
 		insertOrUpdateSubsAndIndexes(s, null);
 
-		decrementCounter(s.getTopicArn(), "subscriptionPending");
-		incrementCounter(s.getTopicArn(), "subscriptionConfirmed");
+		PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(s.getTopicArn(), "subscriptionPending");
+		PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(s.getTopicArn(), "subscriptionConfirmed");
 
 		return s;
 	}
@@ -646,11 +603,11 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			save(deleteCNSTopicSubscriptions.bind().setString("topicArn", s.getArn()).setString("protocol", s.getProtocol().name()).setString("endpoint", s.getEndpoint()));
 
 			if (s.isConfirmed()) {
-				decrementCounter(s.getTopicArn(), "subscriptionConfirmed");
+				PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(s.getTopicArn(), "subscriptionConfirmed");
 			} else {
-				decrementCounter(s.getTopicArn(), "subscriptionPending");
+				PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(s.getTopicArn(), "subscriptionPending");
 			}
-			incrementCounter(s.getTopicArn(), "subscriptionDeleted");
+			PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(s.getTopicArn(), "subscriptionDeleted");
 		}
 	}
 
@@ -673,7 +630,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 
 			if (subs.size() < pageSize) {
 				deleteIndexesAll(subs);
-				incrementCounter(topicArn, "subscriptionDeleted", subs.size());
+				PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(topicArn, "subscriptionDeleted", subs.size());
 				break;
 			} else {
 				//keep the last subscription for pagination purpose.
@@ -683,20 +640,20 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 				deleteIndexesAll(subs);
 				subs = listSubscriptionsByTopic(nextToken, topicArn, null, pageSize, false);
 				deleteIndexes(nextTokenSub.getArn(), nextTokenSub.getUserId(), nextTokenSub.getToken());
-				incrementCounter(topicArn, "subscriptionDeleted", subs.size());
+				PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(topicArn, "subscriptionDeleted", subs.size());
 			}
 		}
 
 		long subscriptionConfirmed = getCountSubscription(topicArn, "subscriptionConfirmed");
 
 		if (subscriptionConfirmed > 0) {
-			decrementCounter(topicArn, "subscriptionConfirmed", (int) subscriptionConfirmed);
+			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(topicArn, "subscriptionConfirmed", (int) subscriptionConfirmed);
 		}
 
 		long subscriptionPending = getCountSubscription(topicArn, "subscriptionPending");
 
 		if (subscriptionPending > 0) {
-			decrementCounter(topicArn, "subscriptionPending", (int) subscriptionPending);
+			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(topicArn, "subscriptionPending", (int) subscriptionPending);
 		}
 
 		save(deleteAllCNSTopicSubscriptions.bind().setString("topicArn", topicArn));

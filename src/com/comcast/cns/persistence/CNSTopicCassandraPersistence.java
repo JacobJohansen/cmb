@@ -15,10 +15,7 @@
  */
 package com.comcast.cns.persistence;
 
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.BaseCassandraDao;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
@@ -30,9 +27,17 @@ import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.util.CQSErrorCodes;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
 /**
  * Provide Cassandra persistence for topics
@@ -40,99 +45,103 @@ import java.util.*;
  *
  * Class is immutable
  */
-public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
+public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> implements ICNSTopicPersistence {
 
 	private static Logger logger = Logger.getLogger(CNSTopicCassandraPersistence.class);
 
 	private static final String columnFamilyTopics = "CNSTopics";
 	private static final String columnFamilyTopicsByUserId = "CNSTopicsByUserId";
-	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
-	private static final String columnFamilyTopicStats = "CNSTopicStats";
-	
-	private static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
+
+
+	PreparedStatement insertCNSTopics;
+	PreparedStatement insertCNSTopicsByUserId;
+
+	PreparedStatement selectCNSTopics;
+	PreparedStatement selectCNSTopicsByUserId;
+
+	PreparedStatement deleteCNSTopics;
+	PreparedStatement deleteCNSTopicsByUserId;
 
 	public CNSTopicCassandraPersistence() {
+		super(DurablePersistenceFactory.getInstance().getSession());
+
+		insertCNSTopics = session.prepare(
+			QueryBuilder.insertInto("CNS", columnFamilyTopics)
+				.value("topicArn", bindMarker("topicArn"))
+				.value("displayName", bindMarker("displayName"))
+				.value("name", bindMarker("name"))
+				.value("userId", bindMarker("userId"))
+		);
+
+		insertCNSTopicsByUserId = session.prepare(
+			QueryBuilder.insertInto("CNS", columnFamilyTopicsByUserId)
+						.value("topicArn", bindMarker("topicArn"))
+						.value("userId", bindMarker("userId"))
+		);
+
+
+		selectCNSTopics = session.prepare(
+			QueryBuilder.select().all().from("CNS", columnFamilyTopics)
+				.where(eq("topicArn", bindMarker("topicArn")))
+		);
+
+		selectCNSTopicsByUserId = session.prepare(
+			QueryBuilder.select().all().from("CNS", columnFamilyTopicsByUserId)
+				.where(eq("userId", bindMarker("userId")))
+		);
+
+		deleteCNSTopics = session.prepare(
+			QueryBuilder.delete().from("CNS", columnFamilyTopics)
+						.where(eq("topicArn", bindMarker("topicArn")))
+		);
+
+		deleteCNSTopicsByUserId = session.prepare(
+			QueryBuilder.delete().from("CNS", columnFamilyTopicsByUserId)
+						.where(eq("userId", bindMarker("userId")))
+		);
+
 	}
-
-	private Map<String, String> getColumnValues(CNSTopic t) {
-
-		Map<String, String> columnValues = new HashMap<String, String>();
-
-		if (t.getUserId() != null) {
-			columnValues.put("userId", t.getUserId());
-		}
-
-		if (t.getName() != null) {
-			columnValues.put("name", t.getName());
-		}
-
-		if (t.getDisplayName() != null) {
-			columnValues.put("displayName", t.getDisplayName());
-		}
-
-		return columnValues;
-	}	
 
 	public CNSTopic createTopic(String name, String displayName, String userId) throws Exception {
 
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
 
-		// disable user topic limit for now
-
-		/*List<CNSTopic> topics = listTopics(userId, null);
-
-		if (topics.size() >= Util.CNS_USER_TOPIC_LIMIT) {
-			throw new CMBException(CNSErrorCodes.CNS_TopicLimitExceeded, "Topic limit exceeded.");
-		}*/
-
 		CNSTopic topic = getTopic(arn);
 
 		if (topic != null) {
 			return topic;
-		} else {
-
-			topic = new CNSTopic(arn, name, displayName, userId);
-			topic.checkIsValid();
-			
-			cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-			cassandraHandler.update(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, topic.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-			
-			// note: deleteing rows or columns makes them permanently unavailable as counters!
-			// http://stackoverflow.com/questions/13653681/apache-cassandra-delete-from-counter
-			
-			//cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-
-			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			long subscriptionConfirmed = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			if (subscriptionConfirmed > 0) {
-				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", (int)subscriptionConfirmed, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			}
-			
-			long subscriptionPending = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			if (subscriptionPending > 0) {
-				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", (int)subscriptionPending, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			}
-
-			long subscriptionDeleted = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			if (subscriptionDeleted > 0) {
-				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", (int)subscriptionDeleted, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			}
-
-			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
-			PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(attributes, arn);
-
-			return topic;
 		}
+
+		topic = new CNSTopic(arn, name, displayName, userId);
+		topic.checkIsValid();
+
+		save(Lists.newArrayList(
+			insertCNSTopics.bind().setString("userId", topic.getUserId()).setString("topicArn", topic.getArn()).setString("displayName", topic.getDisplayName()).setString("name", topic.getName()),
+			insertCNSTopicsByUserId.bind().setString("userId", topic.getUserId()).setString("topicArn", topic.getArn())
+		));
+
+		// note: deleteing rows or columns makes them permanently unavailable as counters!
+		// http://stackoverflow.com/questions/13653681/apache-cassandra-delete-from-counter
+
+		long subscriptionConfirmed = PersistenceFactory.getCNSTopicAttributePersistence().getTopicStats(arn, "subscriptionConfirmed");
+		if (subscriptionConfirmed > 0) {
+			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(arn, "subscriptionConfirmed", (int)subscriptionConfirmed);
+		}
+
+		long subscriptionPending = PersistenceFactory.getCNSTopicAttributePersistence().getTopicStats( arn, "subscriptionPending");
+		if (subscriptionPending > 0) {
+			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(arn, "subscriptionPending", (int)subscriptionPending);
+		}
+
+		long subscriptionDeleted = PersistenceFactory.getCNSTopicAttributePersistence().getTopicStats(arn, "subscriptionDeleted");
+		if (subscriptionDeleted > 0) {
+			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(arn, "subscriptionDeleted", (int)subscriptionDeleted);
+		}
+
+		CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
+		PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(attributes, arn);
+
+		return topic;
 	}
 
 	public void deleteTopic(String arn) throws Exception {
@@ -144,17 +153,12 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		}
 
 		// delete all subscriptions first
-
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
-
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, topic.getUserId(), arn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		
-		//cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		save(Lists.newArrayList(
+			deleteCNSTopics.bind().setString("topicArn", arn),
+			deleteCNSTopicsByUserId.bind().setString("userId", topic.getUserId())
+		));
+		PersistenceFactory.getCNSTopicAttributePersistence().removeTopicAttributes(arn);
 		
 		CNSCache.removeTopic(arn);
 	}
@@ -166,64 +170,27 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			
-		String lastArn = null;
-		int sliceSize;
-		long numTopics = 0;
-
-		do {
-			
-			sliceSize = 0;
-			
-			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, lastArn, null, 10000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			
-			if (slice != null && slice.getColumns().size() > 0) {
-				sliceSize = slice.getColumns().size();
-				numTopics += sliceSize;
-				lastArn = slice.getColumns().get(sliceSize-1).getName();
-			}
-			
-		} while (sliceSize >= 10000);
-		
-		return numTopics;
+		return findAll(selectCNSTopicsByUserId.bind().setString("userId", userId)).size();
 	}
 
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception {
 
-		if (nextToken != null) {
-			if (getTopic(nextToken) == null) {
-				nextToken = null;
-				//throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Invalid parameter nextToken");
-			}
-		}
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, nextToken, null, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CNSTopic> userTopics = find(selectCNSTopicsByUserId.bind().setString("userId", userId), nextToken, 100);
 
-		if (slice != null) {
+		if (userTopics == null) {
+			return topics;
+		}
 			
-			for (CmbColumn<String, String> c : slice.getColumns()) {
-				
-				String arn = c.getName();
+		for (CNSTopic userTopic : userTopics) {
+			CNSTopic topic = getTopic(userTopic.getArn());
+			if (topic!= null) {
+				topic.setNextPage(userTopic.getNextPage());
+				topics.add(topic);
 
-				slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, null, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-
-				if (slice != null) {
-
-					String name = slice.getColumnByName("name").getValue();
-
-					String displayName = null;
-
-					if (slice.getColumnByName("displayName") != null) {
-						displayName = slice.getColumnByName("displayName").getValue();
-					}
-
-					CNSTopic t = new CNSTopic(arn, name, displayName, userId);
-
-					topics.add(t);
-
-				} else {
-					cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, arn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-				}
+			} else {
+				save(deleteCNSTopicsByUserId.bind().setString("userId", userTopic.getUserId()).setString("topicArn", userTopic.getArn()));
 			}
 		}
 
@@ -231,24 +198,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 	}
 
 	public CNSTopic getTopic(String arn) throws Exception {
-
-		CNSTopic topic = null;
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-
-		if (slice != null) {
-
-			String name = slice.getColumnByName("name").getValue();
-			String displayName = null;
-
-			if (slice.getColumnByName("displayName") != null) {
-				displayName = slice.getColumnByName("displayName").getValue();
-			}
-
-			String user = slice.getColumnByName("userId").getValue();
-			topic = new CNSTopic(arn, name, displayName, user);
-		}
-
-		return topic;
+		return findOne(selectCNSTopics.bind().setString("topicArn", arn));
 	}
 
 	public void updateTopicDisplayName(String arn, String displayName) throws Exception {
@@ -258,9 +208,32 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 		if (topic != null) {
 			topic.setDisplayName(displayName);
 			topic.checkIsValid();
-			cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+			save(insertCNSTopics.bind().setString("topicArn", arn).setString("displayName", topic.getDisplayName()));
 		}
 		
 		CNSCache.removeTopic(arn);
+	}
+
+	@Override
+	protected CNSTopic convertToInstance(Row row) {
+		String topicArn = null;
+		String displayName = null;
+		String name = null;
+		String userId = null;
+
+		if (row.getColumnDefinitions().contains("topicArn")) {
+			topicArn = row.getString("topicArn");
+		}
+		if (row.getColumnDefinitions().contains("displayName")) {
+			displayName = row.getString("displayName");
+		}
+		if (row.getColumnDefinitions().contains("name")) {
+			name = row.getString("name");
+		}
+		if (row.getColumnDefinitions().contains("userId")) {
+			userId = row.getString("userId");
+		}
+
+		return new CNSTopic(topicArn, name, displayName, userId);
 	}
 }

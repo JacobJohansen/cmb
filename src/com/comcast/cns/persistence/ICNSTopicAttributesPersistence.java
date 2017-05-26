@@ -9,7 +9,7 @@ public interface ICNSTopicAttributesPersistence {
      * @return
      * @throws Exception
      */
-    public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception;
+    void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception;
 
     /**
      * getTopicAttributes
@@ -17,8 +17,17 @@ public interface ICNSTopicAttributesPersistence {
      * @return CNSTopicAttributes
      * @throws Exception
      */
-    public CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception;
+    CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception;
 
+    void removeTopicAttributes(String topicArn);
 
-    public long getTopicStats(String topicArn, String status);
+    long getTopicStats(String topicArn, String status);
+
+    void incrementCounter(String topicArn, String status, int count);
+
+    void incrementCounter(String topicArn, String status);
+
+    void decrementCounter(String topicArn, String status);
+
+    void decrementCounter(String topicArn, String status, int count);
 }

@@ -28,7 +28,12 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
 
     private PreparedStatement saveTopicAttribute;
     private PreparedStatement findTopicAttribute;
+    private PreparedStatement removeTopicAttribute;
+
     private PreparedStatement findStatusCount;
+
+    private final PreparedStatement incrementCounter;
+    private final PreparedStatement decrementCounter;
 
     private CNSTopicAttributesCassandraPersistence() {
         super(cassandraHandler.getSession());
@@ -48,6 +53,12 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
                           .where(eq("topicArn", bindMarker("topicArn")))
         );
 
+        removeTopicAttribute = session.prepare(
+              QueryBuilder.delete()
+                          .from("CNS", columnFamilyTopicAttributes)
+                          .where(eq("topicArn", bindMarker("topicArn")))
+        );
+
         findStatusCount = session.prepare(
               QueryBuilder.select().column("value")
                           .from("CNS", columnFamilyTopicStats)
@@ -56,6 +67,19 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
                           .limit(1)
         );
 
+        incrementCounter = session.prepare(
+              QueryBuilder.update("CNS", columnFamilyTopicStats)
+                          .where(eq("topicArn", bindMarker("topicArn")))
+                          .and(eq("status", bindMarker("status")))
+                          .with(incr("value", bindMarker("count")))
+        );
+
+        decrementCounter = session.prepare(
+              QueryBuilder.update("CNS", columnFamilyTopicStats)
+                          .where(eq("topicArn", bindMarker("topicArn")))
+                          .and(eq("status", bindMarker("status")))
+                          .with(decr("value", bindMarker("count")))
+        );
     }
 
     public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
@@ -92,6 +116,11 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
         return topicAttributes;
     }
 
+    @Override
+    public void removeTopicAttributes(String topicArn) {
+        save(removeTopicAttribute.bind().setString("topicArn",topicArn));
+    }
+
     public long getTopicStats(String topicArn, String status) {
         return session.execute(findStatusCount.bind()
                                               .setString("topicArn", topicArn)
@@ -123,5 +152,31 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
         }
 
         return cnsTopicAttributes;
+    }
+
+    public void incrementCounter(String topicArn, String status) {
+        incrementCounter(topicArn, status, 1);
+    }
+
+    public void incrementCounter(String topicArn, String status, int count) {
+        save(Lists.newArrayList(
+              incrementCounter.bind()
+                              .setString("topicArn", topicArn)
+                              .setString("status", status)
+                              .setInt("count", count)
+        ));
+    }
+
+    public void decrementCounter(String topicArn, String status) {
+        decrementCounter(topicArn, status, 1);
+    }
+
+    public void decrementCounter(String topicArn, String status, int count) {
+        save(Lists.newArrayList(
+              decrementCounter.bind()
+                              .setString("topicArn", topicArn)
+                              .setString("status", status)
+                              .setInt("count", count)
+        ));
     }
 }
