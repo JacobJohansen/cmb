@@ -14,29 +14,26 @@ CREATE KEYSPACE IF NOT EXISTS "CNS" WITH replication = { 'class' : 'SimpleStrate
 
 USE "CNS";
 
-CREATE TABLE "CNSAPIServers" (
+CREATE TABLE IF NOT EXISTS "CNSAPIServers" (
    "host" text,
    "timestamp" text,
    "jmxport" text,
    "dataCenter" text,
    "serviceUrl" text,
-  PRIMARY KEY ((key), column1)
+  PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSSubscriptionAttributes" (
+CREATE TABLE IF NOT EXISTS "CNSSubscriptionAttributes" (
   "subscriptionArn" text,
   "confirmationWasAuthenticated" boolean,
   "deliveryPolicy" text,
@@ -46,21 +43,17 @@ CREATE TABLE "CNSSubscriptionAttributes" (
   PRIMARY KEY (("subscriptionArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSTopicAttributes" (
+CREATE TABLE IF NOT EXISTS "CNSTopicAttributes" (
   "topicArn" text,
   "effectiveDeliveryPolicy" text,
   "policy" text,
@@ -68,42 +61,34 @@ CREATE TABLE "CNSTopicAttributes" (
   PRIMARY KEY (("topicArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSTopicStats" (
+CREATE TABLE IF NOT EXISTS "CNSTopicStats" (
   "topicArn" text,
   "status" text,
   "value" counter,
   PRIMARY KEY (("topicArn"), "status")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.010000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'SizeTieredCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'SizeTieredCompactionStrategy'};
 
-CREATE TABLE "CNSTopicSubscriptions" (
+CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptions" (
   "topicArn" text,
   "endpoint" text,
   "protocol" text,
@@ -111,84 +96,69 @@ CREATE TABLE "CNSTopicSubscriptions" (
   PRIMARY KEY (("topicArn"), "endpoint", "protocol")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='KEYS_ONLY' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'chunk_length_kb': '64', 'sstable_compression': 'SnappyCompressor'};
+  compression={'chunk_length_in_kb': '64', 'class': 'SnappyCompressor'};
 
-CREATE TABLE "CNSTopicSubscriptionsIndex" (
+CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsIndex" (
   "subscriptionArn" text,
   "endpoint" text,
   "protocol" text,
-  PRIMARY KEY ((subscriptionArn), endpoint)
+  PRIMARY KEY (("subscriptionArn"), "endpoint")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
-  memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  memtable_flush_period_in_ms=0;
 
-CREATE TABLE "CNSTopicSubscriptionsTokenIndex" (
+CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsTokenIndex" (
   "token" text,
   "subscriptionArn" text,
   "value" text,
   PRIMARY KEY (("token"), "subscriptionArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSTopicSubscriptionsUserIndex" (
-  userId text,
-  subscriptionArn text,
-  value text,
+CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsUserIndex" (
+  "userId" text,
+  "subscriptionArn" text,
+  "value" text,
   PRIMARY KEY (("userId"), "subscriptionArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='KEYS_ONLY' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSTopics" (
+CREATE TABLE IF NOT EXISTS "CNSTopics" (
   "topicArn" text,
   "displayName" text,
   "name" text,
@@ -196,67 +166,55 @@ CREATE TABLE "CNSTopics" (
   PRIMARY KEY (("topicArn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSTopicsByUserId" (
+CREATE TABLE IF NOT EXISTS "CNSTopicsByUserId" (
   "userId" text,
   "topicArn" text,
   value text,
   PRIMARY KEY (("userId"), "topicArn")
 ) WITH COMPACT STORAGE AND
+  caching={ 'keys' : 'ALL'} AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CNSWorkers" (
-  host text,
-  producerTimestamp text,
-  consumerTimestamp text,
-  jmxport text,
-  mode text,
-  PRIMARY KEY ((host))
+CREATE TABLE IF NOT EXISTS "CNSWorkers" (
+  "host" text,
+  "producerTimestamp" text,
+  "consumerTimestamp" text,
+  "jmxport" text,
+  "mode" text,
+  PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
 USE "CQS";
 
-CREATE TABLE "CQSAPIServers" (
+CREATE TABLE IF NOT EXISTS "CQSAPIServers" (
   "host" text,
   "timestamp" text,
   "port" text,
@@ -264,46 +222,39 @@ CREATE TABLE "CQSAPIServers" (
   "dataCenter" text,
   "serviceUrl" text,
   "redisServerList" text,
-  PRIMARY KEY ((host))
+  PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CQSPartitionedQueueMessages" (
+CREATE TABLE IF NOT EXISTS "CQSPartitionedQueueMessages" (
   "queueShardPartition" text,
   "becomeVisibleTime" bigint,
   "nodeUUID" bigint,
   "message" text,
-  PRIMARY KEY ((queueShardPartition), becomeVisibleTime, nodeUUID)
+  PRIMARY KEY (("queueShardPartition"), "becomeVisibleTime", "nodeUUID")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='KEYS_ONLY' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=5 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'chunk_length_kb': '64', 'sstable_compression': 'SnappyCompressor'};
+  compression={'chunk_length_in_kb': '64', 'class': 'SnappyCompressor'};
 
-CREATE TABLE "CQSQueues" (
+CREATE TABLE IF NOT EXISTS "CQSQueues" (
   "relativeUrl" text,
   "queueArn" text,
   "name" text,
@@ -324,45 +275,36 @@ CREATE TABLE "CQSQueues" (
   PRIMARY KEY (("relativeUrl"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "CQSQueuesByUserId" (
+CREATE TABLE IF NOT EXISTS "CQSQueuesByUserId" (
   "userId" text,
   "queueArn" text,
   "createdTime" text,
-  value text,
   PRIMARY KEY (("userId"), "queueArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='KEYS_ONLY' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
 USE "CMB";
 
-CREATE TABLE "Users" (
+CREATE TABLE IF NOT EXISTS "Users" (
   "userId" text,
   "userName" text,
   "accessKey" text,
@@ -370,61 +312,49 @@ CREATE TABLE "Users" (
   "description" text,
   "hashPassword" text,
   "isAdmin" text,
-  PRIMARY KEY ((userId))
+  PRIMARY KEY (("userId"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "UserIdByName" (
+CREATE TABLE IF NOT EXISTS "UserIdByName" (
   "userId" text,
   "userName" text,
   "hashPassword" text,
-  PRIMARY KEY ((userName))
+  PRIMARY KEY (("userName"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE "userIdsByAccessKey" (
+CREATE TABLE IF NOT EXISTS "userIdsByAccessKey" (
   "userId" text,
   "accessKey" text,
   "accessSecret" text,
-  PRIMARY KEY ((accessKey))
+  PRIMARY KEY (("accessKey"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
-  caching='ALL' AND
+  caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
   gc_grace_seconds=864000 AND
-  index_interval=128 AND
   read_repair_chance=0.000000 AND
-  replicate_on_write='true' AND
-  populate_io_cache_on_flush='false' AND
   default_time_to_live=0 AND
   speculative_retry='NONE' AND
   memtable_flush_period_in_ms=0 AND
-  compaction={'class': 'LeveledCompactionStrategy'} AND
-  compression={'sstable_compression': 'LZ4Compressor'};
+  compaction={'class': 'LeveledCompactionStrategy'};
