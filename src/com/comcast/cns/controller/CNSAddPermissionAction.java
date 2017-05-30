@@ -15,15 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -38,6 +29,13 @@ import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 import com.comcast.cqs.util.Util;
+import org.apache.log4j.Logger;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Add permission action
@@ -138,7 +136,7 @@ public class CNSAddPermissionAction extends CNSAction {
 
         if (policy.addStatement(CMBPolicy.SERVICE.CNS, label, "Allow", userList, actionList, topicArn, null)) {
         	attributes.setPolicy(policy.toString());
-        	PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(attributes, topicArn);
+        	PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(attributes, topicArn);
         } else {
         	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value " + label + " for parameter Label is invalid. Reason: Already exists.");
         }

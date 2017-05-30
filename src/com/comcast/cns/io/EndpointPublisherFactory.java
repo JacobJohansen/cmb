@@ -15,9 +15,8 @@
  */
 package com.comcast.cns.io;
 
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import org.apache.log4j.Logger;
-
-import com.comcast.cns.model.CNSSubscription;
 
 /**
  * Factory to get appt publisher given protocol
@@ -28,7 +27,7 @@ public class EndpointPublisherFactory {
 
 	protected static Logger logger = Logger.getLogger(EndpointPublisherFactory.class);
 	
-	static public IEndpointPublisher getPublisherInstance(CNSSubscription.CnsSubscriptionProtocol protocol) {
+	static public IEndpointPublisher getPublisherInstance(CnsSubscriptionProtocol protocol) {
 		
 		switch (protocol) { 
 		case https:		

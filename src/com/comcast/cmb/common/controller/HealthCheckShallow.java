@@ -15,17 +15,17 @@
  */
 package com.comcast.cmb.common.controller;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.controller.CQSAction;
+import com.datastax.driver.core.Session;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Provide a basic health-check URL for load-balancers to hit to monitor whether service is up and version
@@ -77,9 +77,9 @@ public class HealthCheckShallow extends CQSAction {
         
         try {
         	
-        	AbstractDurablePersistence cassandra = DurablePersistenceFactory.getInstance();
+        	Session cassandra = DurablePersistenceFactory.getInstance().getSession();
         	
-        	if (cassandra.isAlive()) {
+        	if (!cassandra.isClosed()) {
         		sb.append("\t<Cassandra>OK</Cassandra>\n");
         	} else {
         		sb.append("\t<Cassandra>Ring unavailable.</Cassandra>\n");

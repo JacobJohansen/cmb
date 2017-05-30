@@ -16,24 +16,18 @@
 
 package com.comcast.cmb.common.controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.PersistenceException;
+import org.apache.log4j.Logger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
 
 /**
  * Administrator application.
@@ -143,7 +137,7 @@ public class AdminServlet extends AdminServletBase {
         			(user.getDescription().isEmpty()? "":"<br/><i>" + user.getDescription() + "</i>") +
         			"</td>");
         	out.println("<td>"+user.getUserId()+"</td>");
-        	out.println("<td>"+user.getIsAdmin()+"</td>");
+        	out.println("<td>"+user.getAdmin()+"</td>");
         	out.println("<td>"+user.getAccessKey()+"</td>");
         	out.println("<td>"+user.getAccessSecret()+"</td>");
         	out.println("<td><a href='/webui/cnsuser?userId="+user.getUserId()+"'>CNS</a></td>");

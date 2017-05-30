@@ -15,12 +15,11 @@
  */
 package com.comcast.cns.model;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class represents an endpoint publish job which contains the message and a list of subscribers

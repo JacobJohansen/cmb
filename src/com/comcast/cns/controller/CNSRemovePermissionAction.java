@@ -15,12 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -33,6 +27,11 @@ import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 import com.comcast.cqs.util.Util;
+import org.apache.log4j.Logger;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Remove permission
@@ -85,7 +84,7 @@ public class CNSRemovePermissionAction extends CNSAction {
             
         	if (policy.removeStatement(label)) {
             	attributes.setPolicy(policy.toString());
-        		PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(attributes, topicArn);
+        		PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(attributes, topicArn);
             }
         }
         

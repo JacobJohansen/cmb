@@ -15,12 +15,12 @@
  */
 package com.comcast.cmb.common.persistence;
 
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
 
 public abstract class AbstractDurablePersistence {
 	
@@ -126,15 +126,15 @@ public abstract class AbstractDurablePersistence {
         return t;
     }
 
-	public java.util.UUID getTimeUUID(long timeMillis) throws InterruptedException {
+	public static java.util.UUID getTimeUUID(long timeMillis) throws InterruptedException {
 		return new java.util.UUID(newTime(timeMillis, false), com.eaio.uuid.UUIDGen.getClockSeqAndNode());
 	}
 
-	public java.util.UUID getUniqueTimeUUID(long millis) {
+	public static java.util.UUID getUniqueTimeUUID(long millis) {
 		return new java.util.UUID(com.eaio.uuid.UUIDGen.createTime(millis),	com.eaio.uuid.UUIDGen.getClockSeqAndNode());
 	}
 
-	public long getTimeLong(long timeMillis) throws InterruptedException {
+	public static long getTimeLong(long timeMillis) throws InterruptedException {
 		long newTime = timeMillis * 1000000000 + (System.nanoTime() % 1000000) * 1000 + rand.nextInt(999999); 
 		return newTime;
 	}

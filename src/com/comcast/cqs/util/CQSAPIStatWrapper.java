@@ -15,58 +15,54 @@
  */
 package com.comcast.cqs.util;
 
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.model.CQSAPIStats;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cqs.model.CQSAPIStats;
-
 public class CQSAPIStatWrapper {
 	
 	public static final String CNS_API_SERVERS = "CNSAPIServers";
 	public static final String CQS_API_SERVERS = "CQSAPIServers";
-	public static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
 	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
-		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CNS", CNS_API_SERVERS));
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
-		
-		if (rows != null) {
 			
-			for (CmbRow<String, String, String> row : rows) {
-				
-				CQSAPIStats stats = new CQSAPIStats();
-				stats.setIpAddress(row.getKey());
-				
-				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-					stats.setTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
-				}
-				
-				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
+		for (Row row : resultSet.all()) {
 
-				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
-				}
-				
-				if (row.getColumnSlice().getColumnByName("serviceUrl") != null) {
-					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
-				}
+			CQSAPIStats stats = new CQSAPIStats();
+			stats.setIpAddress(row.getString("host"));
 
-				if (stats.getIpAddress().contains(":")) {
-					statsList.add(stats);
-				}
+			if (!row.isNull("timestamp")) {
+				stats.setTimestamp(Long.parseLong(row.getString("timestamp")));
+			}
+
+			if (!row.isNull("jmxport")) {
+				stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
+			}
+
+			if (!row.isNull("dataCenter")) {
+				stats.setDataCenter(row.getString("dataCenter"));
+			}
+
+			if (!row.isNull("serviceUrl")) {
+				stats.setServiceUrl(row.getString("serviceUrl"));
+			}
+
+			if (stats.getIpAddress().contains(":")) {
+				statsList.add(stats);
 			}
 		}
+
 		return statsList;
 	}
 	
@@ -134,46 +130,43 @@ public class CQSAPIStatWrapper {
 	}
 	
 	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
-		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CQS", CQS_API_SERVERS));
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
-		
-		if (rows != null) {
 			
-			for (CmbRow<String, String, String> row : rows) {
-				
-				CQSAPIStats stats = new CQSAPIStats();
-				stats.setIpAddress(row.getKey());
-				
-				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-					stats.setTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
-				}
-				
-				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
+		for (Row row : resultSet.all()) {
 
-				if (row.getColumnSlice().getColumnByName("port") != null) {
-					stats.setLongPollPort(Long.parseLong(row.getColumnSlice().getColumnByName("port").getValue()));
-				}
+			CQSAPIStats stats = new CQSAPIStats();
+			stats.setIpAddress(row.getString("host"));
 
-				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
-				}
-				
-				if (row.getColumnSlice().getColumnByName("serviceUrl") != null) {
-					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
-				}
-				
-				if (row.getColumnSlice().getColumnByName("redisServerList") != null) {
-					stats.setRedisServerList(row.getColumnSlice().getColumnByName("redisServerList").getValue());
-				}
+			if (!row.isNull("timestamp") ) {
+				stats.setTimestamp(Long.parseLong(row.getString("timestamp")));
+			}
 
-				if (stats.getIpAddress().contains(":")) {
-					statsList.add(stats);
-				}
+			if (!row.isNull("jmxport")) {
+				stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
+			}
+
+			if (!row.isNull("port")) {
+				stats.setLongPollPort(Long.parseLong(row.getString("port")));
+			}
+
+			if (!row.isNull("dataCenter")) {
+				stats.setDataCenter(row.getString("dataCenter"));
+			}
+
+			if (!row.isNull("serviceUrl")) {
+				stats.setServiceUrl(row.getString("serviceUrl"));
+			}
+
+			if (!row.isNull("redisServerList")) {
+				stats.setRedisServerList(row.getString("redisServerList"));
+			}
+
+			if (stats.getIpAddress().contains(":")) {
+				statsList.add(stats);
 			}
 		}
+
 		return statsList;
 	}
 }

@@ -15,22 +15,18 @@
  */
 package com.comcast.cns.tools;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import org.apache.log4j.Logger;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import org.apache.log4j.Logger;
-
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cmb.common.util.Util;
 
 /**
  * The main class for the tool that sends out notifications or creates endpointPublich jobs
@@ -54,15 +50,13 @@ public class CNSPublisher {
     // used for ping
     
     public static volatile AtomicLong lastProducerMinute = new AtomicLong(0); 
-    public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0); 
-    
-    public static volatile AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
-    
+    public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0);
+
     private static void printUsage() {
         System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");
         System.out.println("where possible roles are {Producer, Consumer}");
     }
-    
+
     private static EnumSet<Mode> parseMode(String param) {
     	String[] roles;
     	if (param.contains("=")) {

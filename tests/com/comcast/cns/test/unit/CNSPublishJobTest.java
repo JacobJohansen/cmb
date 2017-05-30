@@ -15,16 +15,6 @@
  */
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.*;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-
-import org.apache.log4j.Logger;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
@@ -33,8 +23,17 @@ import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
+import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+
+import static org.junit.Assert.fail;
 
 public class CNSPublishJobTest {
     static Logger logger = Logger.getLogger(CNSPublishJobTest.class);

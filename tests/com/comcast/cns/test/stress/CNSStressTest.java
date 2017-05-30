@@ -15,38 +15,14 @@
  */
 package com.comcast.cns.test.stress;
 
-import static org.junit.Assert.fail;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNSClient;
-import com.amazonaws.services.sns.model.CreateTopicRequest;
-import com.amazonaws.services.sns.model.CreateTopicResult;
-import com.amazonaws.services.sns.model.DeleteTopicRequest;
-import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.SubscribeRequest;
+import com.amazonaws.services.sns.model.*;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -54,7 +30,21 @@ import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.fail;
 
 public class CNSStressTest {
 	
@@ -88,7 +78,7 @@ public class CNSStressTest {
 	private List<String> topics = new ArrayList<String>();
 	private static final Random rand = new Random();
 	
-	private static AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
+//	private static AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
     @Before
     public void setup() throws Exception {
@@ -144,10 +134,11 @@ public class CNSStressTest {
 		sb.append(now).append(";");
 		sb.append(now.getTime()).append(";");
 
-		sb.append(cassandraHandler.getUniqueTimeUUID(now.getTime())).append(";");
-		
+
+		sb.append(AbstractDurablePersistence.getUniqueTimeUUID(now.getTime())).append(";");
+
 		try {
-			sb.append(cassandraHandler.getTimeLong(now.getTime())).append(";");
+			sb.append(AbstractDurablePersistence.getTimeLong(now.getTime())).append(";");
 		} catch (InterruptedException e1) {
 		}
 		

@@ -15,15 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.Date;
-import java.util.UUID;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
@@ -32,8 +23,16 @@ import com.comcast.cns.io.CommunicationUtils;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
+import org.apache.log4j.Logger;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
+import java.util.UUID;
 /**
  * Subscribe action
  * @author bwolf, jorge
@@ -73,13 +72,13 @@ public class CNSSubscribeAction extends CNSAction {
     		logger.error("event=cns_subscribe error_code=InvalidParameters problem=invalid_arn user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
     		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
-    	CNSSubscription.CnsSubscriptionProtocol subProtocol = null;
+    	CnsSubscriptionProtocol subProtocol = null;
     	
     	if (protocol.equals("email-json")) {
-    		subProtocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
+    		subProtocol = CnsSubscriptionProtocol.email_json;
     	} else {
     		try {
-    			subProtocol = CNSSubscription.CnsSubscriptionProtocol.valueOf(protocol);
+    			subProtocol = CnsSubscriptionProtocol.valueOf(protocol);
     		} catch (IllegalArgumentException iae) {
         		logger.error("event=cns_subscribe error_code=InvalidParameters problem=unknown_protocol user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
         		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");

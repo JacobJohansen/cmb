@@ -15,9 +15,17 @@
  */
 package com.comcast.cns.util;
 
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.tools.CNSWorkerMonitor;
+import com.comcast.cns.tools.CNSWorkerMonitorMBean;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
@@ -26,60 +34,49 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-
-import org.apache.log4j.Logger;
-
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.util.CMBErrorCodes;
-import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cns.model.CNSWorkerStats;
-import com.comcast.cns.tools.CNSWorkerMonitor;
-import com.comcast.cns.tools.CNSWorkerMonitorMBean;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CNSWorkerStatWrapper {
 	
 	private static Logger logger = Logger.getLogger(CNSWorkerStatWrapper.class);
-	private static AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	private static final String CNS_WORKERS = "CNSWorkers";
 	public static List<CNSWorkerStats> getCassandraWorkerStats() throws PersistenceException {
-
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
+		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(
+			QueryBuilder.select().all().from("CNS", CNS_WORKERS)
+		);
 
-		if (rows != null) {
 
-			for (CmbRow<String, String, String> row : rows) {
+		for (Row row : resultSet.all()) {
 
-				CNSWorkerStats stats = new CNSWorkerStats();
+			CNSWorkerStats stats = new CNSWorkerStats();
 
-				stats.setIpAddress(row.getKey());
+			stats.setIpAddress(row.getString("host"));
 
-				if (row.getColumnSlice().getColumnByName("producerTimestamp") != null) {
-					stats.setProducerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("producerTimestamp").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("consumerTimestamp") != null) {
-					stats.setConsumerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("consumerTimestamp").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("mode") != null) {
-					stats.setMode(row.getColumnSlice().getColumnByName("mode").getValue());
-				}
-
-				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
-				}
-				statsList.add(stats);
+			if (!row.isNull("producerTimestamp")) {
+				stats.setProducerTimestamp(Long.parseLong(row.getString("producerTimestamp")));
 			}
+
+			if (!row.isNull("consumerTimestamp")) {
+				stats.setConsumerTimestamp(Long.parseLong(row.getString("consumerTimestamp")));
+			}
+
+			if (!row.isNull("jmxport")) {
+				stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
+			}
+
+			if (!row.isNull("mode")) {
+				stats.setMode(row.getString("mode"));
+			}
+
+			if (!row.isNull("dataCenter")) {
+				stats.setDataCenter(row.getString("dataCenter"));
+			}
+			statsList.add(stats);
 		}
+
 
 		return statsList;
 	}

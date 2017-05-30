@@ -15,13 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -30,6 +23,12 @@ import com.comcast.cns.io.CNSAttributePopulator;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.model.CNSTopicDeliveryPolicy;
 import com.comcast.cns.util.CNSErrorCodes;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Set topic attributes
@@ -117,7 +116,7 @@ public class CNSSetTopicAttributesAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}
     	
-    	PersistenceFactory.getCNSSubscriptionAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
+    	PersistenceFactory.getCNSTopicAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
     	String out = CNSAttributePopulator.getSetTopicAttributesResponse();
     	logger.debug("event=cns_set_topic_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
         writeResponse(out, response);

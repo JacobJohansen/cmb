@@ -15,8 +15,6 @@
  */
 package com.comcast.cns.test.unit;
 
-import java.util.Random;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -24,23 +22,18 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
-import com.comcast.cns.model.CNSRetryPolicy;
-import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscriptionAttributes;
-import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.cns.model.CNSThrottlePolicy;
-import com.comcast.cns.model.CNSTopic;
-import com.comcast.cns.model.CNSTopicAttributes;
-import com.comcast.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cns.model.*;
 import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.CNSSubscriptionAttributesCassandraPersistence;
 import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.CNSTopicAttributesCassandraPersistence;
 import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Random;
+
 import static org.junit.Assert.assertEquals;
 
 public class CNSAttributesCassandraPersistenceTest {
@@ -52,6 +45,7 @@ public class CNSAttributesCassandraPersistenceTest {
     private CNSTopic topic = null;
     private CNSSubscription subscription = null;
 	private CNSSubscriptionAttributesCassandraPersistence attributeHandler = null;
+	private CNSTopicAttributesCassandraPersistence topicAttributeHandler = null;
 
     @Before
     public void setup() throws Exception {
@@ -70,6 +64,7 @@ public class CNSAttributesCassandraPersistenceTest {
 		topicHandler = new CNSTopicCassandraPersistence();
 		subscriptionHandler = new CNSSubscriptionCassandraPersistence();
 		attributeHandler = new CNSSubscriptionAttributesCassandraPersistence();
+		topicAttributeHandler = CNSTopicAttributesCassandraPersistence.getInstance();
 
 		String topicName = "T" + rand.nextLong();
 		topic = topicHandler.createTopic(topicName, topicName, user.getUserId());
@@ -106,9 +101,9 @@ public class CNSAttributesCassandraPersistenceTest {
 		deliveryPolicy.setDefaultHealthyRetryPolicy(defaultHealthyRetryPolicy );
 		topicAttributes.setDeliveryPolicy(deliveryPolicy);
 
-		attributeHandler.setTopicAttributes(topicAttributes , topic.getArn());
+		topicAttributeHandler.setTopicAttributes(topicAttributes , topic.getArn());
 
-		CNSTopicAttributes topicAttributes2 = attributeHandler.getTopicAttributes(topic.getArn());
+		CNSTopicAttributes topicAttributes2 = topicAttributeHandler.getTopicAttributes(topic.getArn());
 
 		assertEquals("Topic attributes do not match", topicAttributes2.getDeliveryPolicy().toString(), deliveryPolicy.toString());
 		assertEquals("Topic attributes do not match", topicAttributes2.getEffectiveDeliveryPolicy().toString(), deliveryPolicy.toString());

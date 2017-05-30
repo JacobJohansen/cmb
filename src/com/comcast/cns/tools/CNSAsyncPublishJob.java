@@ -35,7 +35,7 @@ import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.ICNSSubscriptionAttributesPersistence;
 import com.comcast.cns.persistence.SubscriberNotFoundException;
 import com.comcast.cns.util.Util;

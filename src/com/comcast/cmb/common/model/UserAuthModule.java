@@ -307,7 +307,7 @@ public class UserAuthModule implements IAuthModule {
 	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User " + username + " not found");
 	        }
 	        
-	        if (!AuthUtil.verifyPassword(password, user.getHashPassword())) {
+	        if (!AuthUtil.verifyPassword(password, user.getHashedPassword())) {
                 logger.error("event=authenticate_by_password user=" + username + " error_code=invalid_password");
 	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "Invalid password for user " + username);
 	        }

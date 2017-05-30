@@ -102,6 +102,61 @@ public class CNSRetryPolicy {
 	}
 
 
+	public int getMinDelayTarget() {
+		return minDelayTarget;
+	}
+
+	public void setMinDelayTarget(int minDelayTarget) {
+		this.minDelayTarget = minDelayTarget;
+	}
+
+	public int getMaxDelayTarget() {
+		return maxDelayTarget;
+	}
+
+	public void setMaxDelayTarget(int maxDelayTarget) {
+		this.maxDelayTarget = maxDelayTarget;
+	}
+
+	public int getNumRetries() {
+		return numRetries;
+	}
+
+	public void setNumRetries(int numRetries) {
+		this.numRetries = numRetries;
+	}
+
+	public int getNumMaxDelayRetries() {
+		return numMaxDelayRetries;
+	}
+
+	public void setNumMaxDelayRetries(int numMaxDelayRetries) {
+		this.numMaxDelayRetries = numMaxDelayRetries;
+	}
+
+	public int getNumMinDelayRetries() {
+		return numMinDelayRetries;
+	}
+
+	public void setNumMinDelayRetries(int numMinDelayRetries) {
+		this.numMinDelayRetries = numMinDelayRetries;
+	}
+
+	public int getNumNoDelayRetries() {
+		return numNoDelayRetries;
+	}
+
+	public void setNumNoDelayRetries(int numNoDelayRetries) {
+		this.numNoDelayRetries = numNoDelayRetries;
+	}
+
+	public CnsBackoffFunction getBackOffFunction() {
+		return backOffFunction;
+	}
+
+	public void setBackOffFunction(CnsBackoffFunction backOffFunction) {
+		this.backOffFunction = backOffFunction;
+	}
 
 	/**
 	 * Update this object by taking values from parameter (if present) or the default values

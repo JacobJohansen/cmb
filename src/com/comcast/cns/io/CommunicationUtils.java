@@ -21,6 +21,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 
 /**
  * Utility functions for 
@@ -47,7 +48,7 @@ public class CommunicationUtils {
      * @param user, the user that is sending the message
      * @param protocol, the protocol for the
      */
-	public static String sendMessage(User user, CNSSubscription.CnsSubscriptionProtocol protocol, String endPoint, CNSMessage message, String messageId, String topArn, String subArn, boolean rawDelivery) throws Exception {	
+	public static String sendMessage(User user, CnsSubscriptionProtocol protocol, String endPoint, CNSMessage message, String messageId, String topArn, String subArn, boolean rawDelivery) throws Exception {
 		
 		IEndpointPublisher publisher =  EndpointPublisherFactory.getPublisherInstance(protocol);
 		publisher.setUser(user);
@@ -59,7 +60,7 @@ public class CommunicationUtils {
         publisher.setSubscriptionArn(subArn);
 		publisher.setRawMessageDelivery(rawDelivery);
         
-		if (protocol == CNSSubscription.CnsSubscriptionProtocol.email || protocol == CNSSubscription.CnsSubscriptionProtocol.email_json) {
+		if (protocol == CnsSubscriptionProtocol.email || protocol == CnsSubscriptionProtocol.email_json) {
 			publisher.setSubject("CMB Notification Message");
 		}
 		

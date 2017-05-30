@@ -15,26 +15,21 @@
  */
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.*;
-
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
+import com.comcast.cns.util.Util;
+import com.comcast.cqs.util.RandomNumberCollection;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.test.tools.CMBTestingConstants;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.util.Util;
-import com.comcast.cqs.util.RandomNumberCollection;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class UtilsTest {
 

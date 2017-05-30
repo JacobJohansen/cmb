@@ -15,35 +15,20 @@
  */
 package com.comcast.cqs.test.stress;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.CharArrayWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.xml.parsers.ParserConfigurationException;
-
+import com.amazonaws.AmazonServiceException;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.io.CommunicationUtils;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.util.CQSErrorCodes;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -65,22 +50,17 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.amazonaws.AmazonServiceException;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.io.CommunicationUtils;
-import com.comcast.cqs.model.CQSMessage;
-import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.util.CQSErrorCodes;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
+import java.net.URLEncoder;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 //
 // some useful greps:
@@ -249,13 +229,11 @@ public class CqsStressTester {
 	}
 
 	private void createReceivers(String queueUrl) {
-
-    	AbstractDurablePersistence persistence = DurablePersistenceFactory.getInstance();
     	long receiverCount = CQSStressTestProperties.getInstance().getNumberOfReceiversPerQueue();
     	List<Receiver> receiverListForQueue = new ArrayList<Receiver>();
 
     	for (int i=0; i<receiverCount; i++) {
-    		Receiver receiver = new Receiver(queueUrl, i, persistence);
+    		Receiver receiver = new Receiver(queueUrl, i);
     		receiver.start();
     		receiverListForQueue.add(receiver);
     	}
@@ -559,17 +537,15 @@ public class CqsStressTester {
 		private long totalOutOfOrderMessages = 0;
 		private long lastMessageReceivedTime = 0;
 		private boolean continueThread = true;
-		private AbstractDurablePersistence persistence;
 		private static final int visibilityTimeout = 600;
 		private Set<String> messageIds = new HashSet<String>();
 		//private List<Integer> deleteLatencyMSList = new ArrayList<Integer>();
 		//private Set<Long> flightTimeList = new HashSet<Long>();
 		private long emptyResponseCount = 0;
 
-		public Receiver(String queueUrl, int index, AbstractDurablePersistence persistence) {
+		public Receiver(String queueUrl, int index) {
 			setQueueUrl(queueUrl);
 			setThreadId(queueUrl, index);
-			setPersistence(persistence);
 		}
 
 		public String getQueueUrl() {
@@ -763,14 +739,6 @@ public class CqsStressTester {
 
 		public synchronized void setContinueThread(boolean continueThread) {
 			this.continueThread = continueThread;
-		}
-
-		public AbstractDurablePersistence getPersistence() {
-			return persistence;
-		}
-
-		public void setPersistence(AbstractDurablePersistence persistence) {
-			this.persistence = persistence;
 		}
 
 		public long getTotalOutOfOrderMessages() {

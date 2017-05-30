@@ -15,9 +15,11 @@ CREATE KEYSPACE IF NOT EXISTS "CNS" WITH replication = { 'class' : 'SimpleStrate
 USE "CNS";
 
 CREATE TABLE "CNSAPIServers" (
-  key text,
-  column1 text,
-  value text,
+   "host" text,
+   "timestamp" text,
+   "jmxport" text,
+   "dataCenter" text,
+   "serviceUrl" text,
   PRIMARY KEY ((key), column1)
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -230,10 +232,12 @@ CREATE TABLE "CNSTopicsByUserId" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CNSWorkers" (
-  key text,
-  column1 text,
-  value text,
-  PRIMARY KEY ((key), column1)
+  host text,
+  producerTimestamp text,
+  consumerTimestamp text,
+  jmxport text,
+  mode text,
+  PRIMARY KEY ((host))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -253,10 +257,14 @@ CREATE TABLE "CNSWorkers" (
 USE "CQS";
 
 CREATE TABLE "CQSAPIServers" (
-  key text,
-  column1 text,
-  value text,
-  PRIMARY KEY ((key), column1)
+  "host" text,
+  "timestamp" text,
+  "port" text,
+  "jmxport" text,
+  "dataCenter" text,
+  "serviceUrl" text,
+  "redisServerList" text,
+  PRIMARY KEY ((host))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -274,11 +282,11 @@ CREATE TABLE "CQSAPIServers" (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE "CQSPartitionedQueueMessages" (
-  key text,
-  column1 bigint,
-  column2 bigint,
-  value text,
-  PRIMARY KEY ((key), column1, column2)
+  "queueShardPartition" text,
+  "becomeVisibleTime" bigint,
+  "nodeUUID" bigint,
+  "message" text,
+  PRIMARY KEY ((queueShardPartition), becomeVisibleTime, nodeUUID)
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='KEYS_ONLY' AND
@@ -296,18 +304,24 @@ CREATE TABLE "CQSPartitionedQueueMessages" (
   compression={'chunk_length_kb': '64', 'sstable_compression': 'SnappyCompressor'};
 
 CREATE TABLE "CQSQueues" (
-  key text,
-  arn text,
-  "createdTime" text,
-  "delaySeconds" text,
+  "relativeUrl" text,
+  "queueArn" text,
+  "name" text,
+  "userId" text,
+  "region" text,
+  "serviceEndpoint" text,
+  "visibilityTO" text,
   "maxMsgSize" text,
   "msgRetentionPeriod" text,
-  name text,
-  "ownerUserId" text,
-  policy text,
-  region text,
-  "visibilityTO" text,
-  PRIMARY KEY ((key))
+  "delaySeconds" text,
+  "policy" text,
+  "createdTime" text,
+  "waitTime" text,
+  "numberOfPartitions" text,
+  "numberOfShards" text,
+  "compressed" text,
+  "redrivePolicy" text,
+  PRIMARY KEY (("relativeUrl"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='ALL' AND
@@ -326,9 +340,10 @@ CREATE TABLE "CQSQueues" (
 
 CREATE TABLE "CQSQueuesByUserId" (
   "userId" text,
-  column1 text,
+  "queueArn" text,
+  "createdTime" text,
   value text,
-  PRIMARY KEY (("userId"), column1)
+  PRIMARY KEY (("userId"), "queueArn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching='KEYS_ONLY' AND
@@ -344,9 +359,6 @@ CREATE TABLE "CQSQueuesByUserId" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'sstable_compression': 'LZ4Compressor'};
-
-
-
 
 USE "CMB";
 

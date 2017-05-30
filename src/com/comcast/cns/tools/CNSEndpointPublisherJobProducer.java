@@ -15,29 +15,27 @@
  */
 package com.comcast.cns.tools;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
 import com.comcast.cqs.model.CQSMessage;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
+
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * This class represents the Producer that reads the CNSMessage, partitions the subscribers and
@@ -105,12 +103,14 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
                 logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
 
 	        	try {
-		        	Map<String, String> values = new HashMap<String, String>();
-		        	values.put("producerTimestamp", System.currentTimeMillis() + "");
-		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-		        	values.put("mode", CNSPublisher.getModeString());
-		        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	                CNSPublisher.cassandraHandler.insertRow(CMBProperties.getInstance().getCNSKeyspace(), hostAddress, "CNSWorkers", values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+					DurablePersistenceFactory.getInstance().getSession().execute(
+						QueryBuilder.insertInto("CNS", "CNSWorkers")
+							.value("host", hostAddress)
+							.value("producerTimestamp", System.currentTimeMillis() + "")
+							.value("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"))
+							.value("mode", CNSPublisher.getModeString())
+							.value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
+					);
 	            } catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
 	        	}

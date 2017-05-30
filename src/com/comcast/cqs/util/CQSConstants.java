@@ -71,7 +71,7 @@ public class CQSConstants {
 	public static final String COL_CREATED_TIME = "createdTime";
 	public static final String COL_HOST_NAME = "hostName";
 	public static final String COL_WAIT_TIME_SECONDS = "waitTimeSeconds";
-	public static final String COL_NUMBER_PARTITIONS = "numPartitions";
-	public static final String COL_NUMBER_SHARDS = "numShards";
+	public static final String COL_NUMBER_PARTITIONS = "numOfPartitions";
+	public static final String COL_NUMBER_SHARDS = "numOfShards";
 	public static final String COL_COMPRESSED = "compressed";
 }

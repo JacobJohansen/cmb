@@ -15,10 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ExpiringCache;
@@ -26,9 +22,13 @@ import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
-import com.comcast.cns.persistence.ICNSSubscriptionAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.persistence.ICNSTopicAttributesPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Utility class that contains most of the caches the rest of the code uses
@@ -37,7 +37,7 @@ import com.comcast.cns.persistence.ICNSTopicPersistence;
 public class CNSCache {
 	
     private static volatile ExpiringCache<String, CNSTopicAttributes> attributeCache = new ExpiringCache<String, CNSTopicAttributes>(CMBProperties.getInstance().getCNSCacheSizeLimit());
-	private static volatile ICNSSubscriptionAttributesPersistence attributeHandler = PersistenceFactory.getCNSSubscriptionAttributePersistence();
+	private static volatile ICNSTopicAttributesPersistence attributeHandler = PersistenceFactory.getCNSTopicAttributePersistence();
 
     private static volatile ExpiringCache<String, List<CNSSubscription>> confirmedSubscriptionsCache = new ExpiringCache<String, List<CNSSubscription>>(CMBProperties.getInstance().getCNSCacheSizeLimit());
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();

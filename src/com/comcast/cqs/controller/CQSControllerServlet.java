@@ -15,34 +15,31 @@
  */
 package com.comcast.cqs.controller;
 
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The main controller for CQS
@@ -167,7 +164,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
+        		Session cassandraHandler = DurablePersistenceFactory.getInstance().getSession();
 
         		// write ping
         		
@@ -175,18 +172,17 @@ public class CQSControllerServlet extends CMBControllerServlet {
         		String serverPort = CMBProperties.getInstance().getCQSServerPort() + "";
         		
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + serverIp + " port=" + serverPort);
-        		
-        		Map<String, String> values = new HashMap<String, String>();
-	        	
-        		values.put("timestamp", now + "");
-	        	values.put("port", CMBProperties.getInstance().getCQSLongPollPort() + "");
-	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl());
-	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
-	        	
-                cassandraHandler.insertRow(AbstractDurablePersistence.CQS_KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-                
+
+                cassandraHandler.execute(
+                      QueryBuilder.insertInto("CQS", "CQSAPIServers")
+                        .value("host",serverIp + ":" + serverPort)
+                        .value("timestamp",now + "")
+                        .value("port",CMBProperties.getInstance().getCQSLongPollPort() + "")
+                        .value("jmxport",System.getProperty("com.sun.management.jmxremote.port", "0"))
+                        .value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
+                        .value("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl())
+                        .value("redisServerList", CMBProperties.getInstance().getRedisServerList())
+                );
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);
         	}

@@ -15,11 +15,6 @@
  */
 package com.comcast.cmb.test.unit;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -27,10 +22,15 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
-
 import org.apache.log4j.Logger;
-import org.junit.* ;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -131,13 +131,13 @@ public class UserPersistenceTest {
 		assertTrue(user.getUserName().equals(userName));
 		assertNotNull(user.getAccessKey());
 		assertNotNull(user.getAccessSecret());
-		assertNotNull(user.getHashPassword());
+		assertNotNull(user.getHashedPassword());
 		assertNotNull(user.getUserId());
 	}
 	
 	private void assertAdmin(String userName, User user) {
 		assertUser(userName, user);
-		assertTrue(user.getIsAdmin());
+		assertTrue(user.getAdmin());
 	}
 
 	private void verifyUserCleanup(List<User> users, IUserPersistence persistence) throws PersistenceException {

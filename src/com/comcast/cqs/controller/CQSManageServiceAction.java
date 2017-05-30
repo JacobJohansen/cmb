@@ -15,24 +15,22 @@
  */
 package com.comcast.cqs.controller;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
 import com.comcast.cqs.util.CQSErrorCodes;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author aseem, bwolf
@@ -67,22 +65,19 @@ public class CQSManageServiceAction extends CQSAction {
 		String host = request.getParameter("Host");
 		
 		if (task.equals("ClearCache")) {
-
 			PersistenceFactory.getCQSMessagePersistence().flushAll();
 	    	String out = CQSPopulator.getResponseMetadata();
             writeResponse(out, response);
 	        return true;
         
 		} else if (task.equals("ClearAPIStats")) {
-
             CMBControllerServlet.initStats();
             String out = CQSPopulator.getResponseMetadata();
             writeResponse(out, response);
 	    	return true;
 			
 		} else if (task.equals("RemoveRecord")) {
-			
-			DurablePersistenceFactory.getInstance().delete(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CQS", CQS_API_SERVERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

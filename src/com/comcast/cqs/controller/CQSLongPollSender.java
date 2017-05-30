@@ -15,6 +15,21 @@
  */
 package com.comcast.cqs.controller;
 
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cqs.model.CQSAPIStats;
+import com.comcast.cqs.util.Util;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -22,39 +37,11 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.comcast.cqs.model.CQSAPIStats;
-import com.comcast.cqs.util.Util;
-
-import org.apache.log4j.Logger;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.util.CMBProperties;
 
 public class CQSLongPollSender {
 	
@@ -157,45 +144,44 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		List<CmbRow<String, String, String>> rows = DurablePersistenceFactory.getInstance().readAllRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+	        		ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CQS","CQSAPIServers"));
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		
-	        		if (rows != null) {
-	        			
-	        			for (CmbRow<String, String, String> row : rows) {
-	        				
-	        				CQSAPIStats stats = new CQSAPIStats();
-	        				
-	        				String endpoint = row.getKey();
-	        				
-	    					stats.setIpAddress(endpoint);
 
-	        				String dataCenter = CMBProperties.getInstance().getCMBDataCenter();
-	        				long timestamp = 0;
-	        				int longpollPort = 0;
-	        				
-	        				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-	        					timestamp = (Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
-	        					stats.setTimestamp(timestamp);
-	        				}
-	        				
-	        				if (row.getColumnSlice().getColumnByName("port") != null) {
-	        					longpollPort = Integer.parseInt(row.getColumnSlice().getColumnByName("port").getValue());
-	        					stats.setLongPollPort(longpollPort);
-	        				}
-	        				
-	        				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-	        					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
-	        					stats.setDataCenter(dataCenter);
-	        				}
-	        				
-	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServiceUrl())).getPort())) {
-	        					cqsAPIServers.put(endpoint.substring(0, endpoint.indexOf(":")) + ":" + longpollPort, stats);
-		        				logger.info("event=found_active_cqs_endpoint endpoint=" + endpoint);
-	        				}
-	        			}
-	        		}    
+	        			
+					for (Row row : rows.all()) {
+
+						CQSAPIStats stats = new CQSAPIStats();
+
+						String endpoint = row.getString("host");
+
+						stats.setIpAddress(endpoint);
+
+						String dataCenter = CMBProperties.getInstance().getCMBDataCenter();
+						long timestamp = 0;
+						int longpollPort = 0;
+
+						if (!row.isNull("timestamp")) {
+							timestamp = (Long.parseLong(row.getString("timestamp")));
+							stats.setTimestamp(timestamp);
+						}
+						if (!row.isNull("port")) {
+							longpollPort = Integer.parseInt(row.getString("port"));
+							stats.setLongPollPort(longpollPort);
+						}
+
+						if (!row.isNull("dataCenter")) {
+							dataCenter = row.getString("dataCenter");
+							stats.setDataCenter(dataCenter);
+						}
+
+						if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServiceUrl())).getPort())) {
+							cqsAPIServers.put(endpoint.substring(0, endpoint.indexOf(":")) + ":" + longpollPort, stats);
+							logger.info("event=found_active_cqs_endpoint endpoint=" + endpoint);
+						}
+					}
+
 	        		
 	        		// remove dead endpoints from list
 	        		

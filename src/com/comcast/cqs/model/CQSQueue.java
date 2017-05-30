@@ -49,6 +49,7 @@ public class CQSQueue {
     private int numberOfPartitions = 100;
     private int numberOfShards = 1;
     private boolean compressed = false;
+    private String redrivePolicy;
     
 	public CQSQueue(String name, String ownerId) {
     	
@@ -243,4 +244,12 @@ public class CQSQueue {
 	public void setNumberOfShards(int numberOfShards) {
 		this.numberOfShards = numberOfShards;
 	}
+
+    public String getRedrivePolicy() {
+        return redrivePolicy;
+    }
+
+    public void setRedrivePolicy(String redrivePolicy) {
+        this.redrivePolicy = redrivePolicy;
+    }
 }

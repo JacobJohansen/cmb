@@ -15,22 +15,20 @@
  */
 package com.comcast.cmb.common.controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.CMBProperties;
+import org.apache.log4j.Logger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Map;
 
 /**
  * Admin page for user login
@@ -62,7 +60,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 				user = userHandler.getUserByName(userName);
 				HttpSession session = request.getSession(true);
 
-				if (user!=null && AuthUtil.verifyPassword(password, user.getHashPassword())) {
+				if (user!=null && AuthUtil.verifyPassword(password, user.getHashedPassword())) {
 					logger.info("event=login_admin_ui user_name=" + userName + " user_id=" + user.getUserId());
 					session.setAttribute("USER", user);
 				} else if (user==null && CMBProperties.getInstance().getCNSUserName().equals(userName) && CMBProperties.getInstance().getCNSUserPassword().equals(password)) {

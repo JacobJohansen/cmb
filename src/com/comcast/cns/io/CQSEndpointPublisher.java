@@ -25,7 +25,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.api.CQSAPI;
 import com.comcast.cqs.util.Util;

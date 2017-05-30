@@ -16,10 +16,11 @@
 
 package com.comcast.cns.io;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.URL;
-
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
@@ -41,21 +42,12 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.SyncBasicHttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.ImmutableHttpProcessor;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestExpectContinue;
-import org.apache.http.protocol.RequestTargetHost;
-import org.apache.http.protocol.RequestUserAgent;
+import org.apache.http.protocol.*;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
-import com.comcast.cns.model.CNSMessage.CNSMessageType;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.URL;
 
 /**
  * Asynchronous HTTP/1.1 client.

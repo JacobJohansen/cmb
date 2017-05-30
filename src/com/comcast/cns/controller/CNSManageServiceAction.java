@@ -15,8 +15,22 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cns.io.CNSPopulator;
+import com.comcast.cns.io.CNSWorkerStatsPopulator;
+import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.tools.CNSWorkerMonitorMBean;
+import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cns.util.CNSWorkerStatWrapper;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
 
 import javax.management.JMX;
 import javax.management.MBeanServerConnection;
@@ -27,24 +41,8 @@ import javax.management.remote.JMXServiceURL;
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.CMBPolicy;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.util.CMBErrorCodes;
-import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cns.io.CNSPopulator;
-import com.comcast.cns.io.CNSWorkerStatsPopulator;
-import com.comcast.cns.model.CNSWorkerStats;
-import com.comcast.cns.tools.CNSWorkerMonitorMBean;
-import com.comcast.cns.util.CNSErrorCodes;
-import com.comcast.cns.util.CNSWorkerStatWrapper;
+import java.util.ArrayList;
+import java.util.List;
 /**
  * Subscribe action
  * @author bwolf
@@ -90,37 +88,28 @@ public class CNSManageServiceAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
-		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
-
 		if (task.equals("ClearWorkerQueues")) {
 
-			List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CNS", CNS_WORKERS));
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
-			if (rows != null) {
+			for (Row row : rows.all()) {
 
-				for (CmbRow<String, String, String> row : rows) {
+				CNSWorkerStats stats = new CNSWorkerStats();
+				String endpoint = row.getString("host");
+				stats.setIpAddress(endpoint);
 
-					CNSWorkerStats stats = new CNSWorkerStats();
-					stats.setIpAddress(row.getKey());
-
-					if (row.getColumnSlice().getColumnByName("producerTimestamp") != null) {
-						stats.setProducerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("producerTimestamp").getValue()));
-					}
-
-					if (row.getColumnSlice().getColumnByName("consumerTimestamp") != null) {
-						stats.setConsumerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("consumerTimestamp").getValue()));
-					}
-
-					if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-						stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-					}
-
-					if (row.getColumnSlice().getColumnByName("mode") != null) {
-						stats.setMode(row.getColumnSlice().getColumnByName("mode").getValue());
-					}
-
-					statsList.add(stats);
+				if (!row.isNull("producerTimestamp")) {
+					stats.setProducerTimestamp(Long.parseLong(row.getString("producerTimestamp")));
+				}
+				if (!row.isNull("consumerTimestamp")) {
+					stats.setConsumerTimestamp(Long.parseLong(row.getString("consumerTimestamp")));
+				}
+				if (!row.isNull("jmxport")) {
+					stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
+				}
+				if (!row.isNull("mode")) {
+					stats.setMode(row.getString("mode"));
 				}
 			}
 
@@ -162,8 +151,7 @@ public class CNSManageServiceAction extends CNSAction {
 			throw new CMBException(CMBErrorCodes.NotFound, "Cannot clear worker queues: Host " + host + " not found.");
 
 		} else if (task.equals("RemoveWorkerRecord")) {
-			
-			cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CNS", CNS_WORKERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;
@@ -176,8 +164,7 @@ public class CNSManageServiceAction extends CNSAction {
 	    	return true;
 
 		} else if (task.equals("RemoveRecord")) {
-			
-			cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, CNS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CNS", CNS_API_SERVERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

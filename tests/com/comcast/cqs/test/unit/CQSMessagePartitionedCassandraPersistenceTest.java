@@ -15,32 +15,9 @@
  */
 package com.comcast.cqs.test.unit;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.json.JSONException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.*;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -50,7 +27,20 @@ import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
 import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.eaio.uuid.UUIDGen;
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class CQSMessagePartitionedCassandraPersistenceTest {
 
@@ -281,7 +271,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int k=0; k<numberOfShards; k++) {
 			for (int i=0; i<numberOfPartitions; i++) {
 				String queueKey = queueHash + "_" + k + "_" + i;
-				long partitionCount = DurablePersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+				long partitionCount = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages").where(QueryBuilder.eq("queueShardPartition", queueKey))).all().size();
 				messageCount += partitionCount;
 				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
 			}

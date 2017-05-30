@@ -15,40 +15,29 @@
  */
 package com.comcast.cmb.test.tools;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.log4j.Logger;
-
 import com.amazonaws.util.json.JSONWriter;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.controller.CNSControllerServlet;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.test.unit.CNSSubscriptionTest;
 import com.comcast.cqs.controller.CQSControllerServlet;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.log4j.Logger;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class CNSTestingUtils {
 

@@ -15,9 +15,12 @@
  */
 package com.comcast.cns.io;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -40,12 +43,8 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.util.CMBErrorCodes;
-import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
-import com.comcast.cns.model.CNSMessage.CNSMessageType;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * Following class uses the HttpClient library version 4.2.1 

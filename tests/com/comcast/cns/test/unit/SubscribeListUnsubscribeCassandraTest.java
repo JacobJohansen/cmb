@@ -15,15 +15,6 @@
  */
 package com.comcast.cns.test.unit;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.apache.log4j.Logger;
-import org.junit.* ;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -36,14 +27,17 @@ import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSTopic;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
-import com.comcast.cns.persistence.ICNSSubscriptionAttributesPersistence;
-import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cns.model.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.*;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.*;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SubscribeListUnsubscribeCassandraTest {
 

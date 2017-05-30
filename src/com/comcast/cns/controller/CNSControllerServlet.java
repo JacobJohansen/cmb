@@ -15,28 +15,11 @@
  */
 package com.comcast.cns.controller;
 
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -45,6 +28,19 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.apache.log4j.Logger;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Servlet for handling all CNS actions
@@ -193,25 +189,21 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	if (lastCNSPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
 
         	try {
-
-        		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
-
         		// write ping
         		
         		String serverIp = InetAddress.getLocalHost().getHostAddress();
         		String serverPort = CMBProperties.getInstance().getCNSServerPort() + "";
         		
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + serverIp + " port=" + serverPort);
-        		
-        		Map<String, String> values = new HashMap<String, String>();
-        		
-	        	values.put("timestamp", now + "");
-	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl());
-	        	
-                cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, serverIp + ":" + serverPort, CNS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-                
+
+				DurablePersistenceFactory.getInstance().getSession().execute(
+					QueryBuilder.insertInto("CNS", CNS_API_SERVERS)
+						.value("host", serverIp + ":" + serverPort)
+						.value("timestamp", now + "")
+						.value("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"))
+						.value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
+						.value("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl())
+				);
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);
         	}
