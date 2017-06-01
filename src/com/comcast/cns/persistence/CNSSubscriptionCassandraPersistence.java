@@ -406,7 +406,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		CNSSubscription subscription = findOne(selectCNSTopicSubscriptionsIndex.bind().setString("subscription_arn", arn));
 
 		if (subscription != null) {
-			return findOne(selectCNSTopicSubscriptions.bind().setString("topic_arn", subscription.getTopicArn()));
+			return findOne(selectCNSTopicSubscriptions.bind().setString("topic_arn", subscription.getTopicArn()).setString("last_endpoint", ""));
 		}
 
 		return null;

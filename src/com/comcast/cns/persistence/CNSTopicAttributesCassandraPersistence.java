@@ -92,8 +92,10 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
         BoundStatement saveStatement = saveTopicAttribute.bind()
                                                          .setString("user_id",topicAttributes.getUserId())
                                                          .setString("topic_arn", topicArn)
-                                                         .setString("effective_delivery_policy", topicAttributes.getDeliveryPolicy().toJSON().toString())
                                                          .setString("policy", topicAttributes.getPolicy());
+        if (topicAttributes.getDeliveryPolicy() != null) {
+            saveStatement.setString("effective_delivery_policy", topicAttributes.getDeliveryPolicy().toJSON().toString());
+        }
         save(Lists.newArrayList(saveStatement));
 
         if (topicAttributes.getDisplayName() != null) {

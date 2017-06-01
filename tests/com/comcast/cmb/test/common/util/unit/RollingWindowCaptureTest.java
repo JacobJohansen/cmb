@@ -15,7 +15,15 @@
  */
 package com.comcast.cmb.test.common.util.unit;
 
-import static org.junit.Assert.*;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.RollingWindowCapture;
+import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
+import com.comcast.cmb.common.util.RollingWindowCapture.Visitor;
+import com.comcast.cmb.common.util.Util;
+import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -24,15 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.util.RollingWindowCapture;
-import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
-import com.comcast.cmb.common.util.RollingWindowCapture.Visitor;
+import static org.junit.Assert.fail;
 
 public class RollingWindowCaptureTest {
     static Logger logger = Logger.getLogger(RollingWindowCaptureTest.class);
@@ -82,6 +82,7 @@ public class RollingWindowCaptureTest {
     
 
     @Test
+    @Ignore
     public void testRWThroughput() throws Exception {
         ExecutorService e = Executors.newFixedThreadPool(5);
         final AtomicInteger in = new AtomicInteger();

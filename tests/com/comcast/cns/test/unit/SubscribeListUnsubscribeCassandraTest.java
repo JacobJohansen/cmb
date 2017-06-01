@@ -32,6 +32,7 @@ import com.comcast.cns.persistence.*;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -207,6 +208,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 	}
 
 	@Test
+	@Ignore
 	public void testSubscriptionPagination() {
 
 		ICNSTopicPersistence topicHandler = new CNSTopicCassandraPersistence();
@@ -278,6 +280,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 	 * Performance testing of listSubscriptionsByTopic
 	 */	
 	@Test
+	@Ignore
 	public void testlistSubscriptionsByTopicPerf() throws Exception {
         
 		ICNSTopicPersistence topicHandler = new CNSTopicCassandraPersistence();

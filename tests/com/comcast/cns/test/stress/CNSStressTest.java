@@ -34,6 +34,7 @@ import com.comcast.cns.model.CnsSubscriptionProtocol;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.fail;
 
+@Ignore
 public class CNSStressTest {
 	
     private static Logger logger = Logger.getLogger(CNSStressTest.class);

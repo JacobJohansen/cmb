@@ -92,8 +92,8 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 						.all()
 						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
 						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
-						.and(lte("become_visible_time", bindMarker("latest")))
-						.and(gte("become_visible_time", bindMarker("oldest")))
+						.and(lt("become_visible_time", bindMarker("newest")))
+						.and(gt("become_visible_time", bindMarker("oldest")))
 		);
 
 		deleteMessages = session.prepare(
@@ -315,6 +315,9 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		String key = queueHash + "_" + shard + "_0";
 		String handle = null;
+		String[] handleParts = null;
+		Long oldest = AbstractDurablePersistence.newTime(System.currentTimeMillis() - 1209600000, false);
+		Long newest = AbstractDurablePersistence.newTime(System.currentTimeMillis() + 1209600000, false);
 		
 		int numberPartitions = getNumberOfPartitions(queueUrl);
 		int numberShards = getNumberOfShards(queueUrl);
@@ -326,7 +329,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		}
 
 		if (handle != null) {
-			String[] handleParts = handle.split(":");
+			handleParts = handle.split(":");
 
 			if (handleParts.length != 3) {
 				logger.error("event=peek_queue error_code=corrupt_receipt_handle receipt_handle=" + handle);
@@ -342,6 +345,12 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 			throw new IllegalArgumentException("Invalid queue key " + key);
 		}
 
+		if (previousReceiptHandle != null) {
+			oldest = Long.parseLong(handleParts[1]);
+		} else if (nextReceiptHandle != null) {
+			newest = Long.parseLong(handleParts[1]);
+		}
+
 
 
 		logger.debug("event=peek_queue queue_url=" + queueUrl + " prev_receipt_handle=" + previousReceiptHandle + " next_receipt_handle=" + nextReceiptHandle + " length=" + length + " num_partitions=" + numberPartitions);
@@ -355,13 +364,20 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 			throw new IllegalArgumentException("Invalid queue shard number " + shardNumber);			
 		}
 
+
 		while (messageList.size() < length && -1 < partitionNumber && partitionNumber < numberPartitions) {
 			key = queueHash + "_" + shardNumber + "_" + partitionNumber;
-			List<CQSMessage> page = find(selectMessages.bind().setString("queue_shard_partition", key), null, length - messageList.size() + 1);
+			messageList.addAll(find(selectMessages.bind().setString("queue_shard_partition", key).setLong("oldest", oldest).setLong("newest", newest), null, length - messageList.size() + 1));
 
-
-
-			partitionNumber++;
+			if (previousReceiptHandle != null) {
+				partitionNumber++;
+				oldest = AbstractDurablePersistence.newTime(System.currentTimeMillis() -1209600000, false);
+			} else if (nextReceiptHandle != null) {
+				partitionNumber--;
+				newest = AbstractDurablePersistence.newTime(System.currentTimeMillis() +1209600000, false);
+			} else {
+				partitionNumber++;
+			}
 		}
 		
 		return messageList;
@@ -507,14 +523,15 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
             
         	// get from random set of rows
             // note: as a simplification we may return less messages than length if not all rows contain messages
-            
+			Long oldest = AbstractDurablePersistence.newTime(System.currentTimeMillis() - 1209600000, false);
+			Long newest = AbstractDurablePersistence.newTime(System.currentTimeMillis() + 1209600000, false);
         	RandomNumberCollection rc = new RandomNumberCollection(numberPartitions);
             
             for (int i = 0; i < numberPartitions && messageList.size() < length; i++) {
                 
             	int partition = rc.getNext();
                 String key = queueHash + "_" + shard + "_" + partition;
-                messageList.addAll(find(selectMessages.bind().setString("queue_shard_partition", key), null, 1));
+                messageList.addAll(find(selectMessages.bind().setString("queue_shard_partition", key).setLong("oldest", oldest).setLong("newest", newest), null, 1));
             }
             
             return messageList;
