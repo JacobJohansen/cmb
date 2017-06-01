@@ -92,10 +92,9 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 						.all()
 						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
 						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
-//						.and(lte("become_visible_time", bindMarker("become_visible_time")))
+						.and(lte("become_visible_time", bindMarker("latest")))
+						.and(gte("become_visible_time", bindMarker("oldest")))
 		);
-
-		// eq key, gte now - max age, (gt || lt handler)
 
 		deleteMessages = session.prepare(
 			QueryBuilder.delete()
@@ -383,7 +382,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 			);
 		}
 
-		save(clearAllPartitions);
+		delete(clearAllPartitions);
 	}
 
 	@Override
@@ -523,8 +522,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
     }
 
 	@Override
-	public List<String> getIdsFromHead(String queueUrl, int shard, int num)
-			throws PersistenceException {
+	public List<String> getIdsFromHead(String queueUrl, int shard, int num) throws PersistenceException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -536,15 +534,13 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 	}
 
 	@Override
-	public boolean checkCacheConsistency(String queueUrl, int shard,
-			boolean trueOnFiller) {
+	public boolean checkCacheConsistency(String queueUrl, int shard, boolean trueOnFiller) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public long getQueueMessageCount(String queueUrl, boolean processHiddenIds)
-			throws Exception {
+	public long getQueueMessageCount(String queueUrl, boolean processHiddenIds) throws Exception {
 		// TODO Auto-generated method stub
 		return 0;
 	}
@@ -562,15 +558,13 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 	}
 
 	@Override
-	public long getQueueNotVisibleMessageCount(String queueUrl,
-			boolean visibilityProcessFlag) throws Exception {
+	public long getQueueNotVisibleMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public long getQueueDelayedMessageCount(String queueUrl,
-			boolean visibilityProcessFlag) throws Exception {
+	public long getQueueDelayedMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception {
 		// TODO Auto-generated method stub
 		return 0;
 	}

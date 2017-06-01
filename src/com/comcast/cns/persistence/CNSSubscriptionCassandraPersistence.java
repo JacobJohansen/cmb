@@ -122,6 +122,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 				.all()
 				.from("cns", columnFamilySubscriptions)
 				.where(eq("topic_arn", bindMarker("topic_arn")))
+				.and(gt("endpoint", bindMarker("last_endpoint")))
 		);
 
 		selectCNSTopicSubscriptionsIndex = session.prepare(
@@ -136,6 +137,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 				.all()
 				.from("cns", columnFamilySubscriptionsUserIndex)
 				.where(eq("user_id", bindMarker("user_id")))
+				.and(gt("subscription_arn", bindMarker("last_subscription_arn")))
 		);
 
 		selectCNSTopicSubscriptionsTokenIndex = session.prepare(
@@ -345,7 +347,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			subscription.setConfirmed(true);
 			subscription.setConfirmDate(new Date());
 
-			insertOrUpdateSubsAndIndexes(subscription, null);
+			insertOrUpdateSubsAndIndexes(subscription, 0);
 
 			if (retrievedSubscription == null) {
 				PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
@@ -358,7 +360,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			if (!protocol.canConfirmSubscription()) {
 				subscription.setConfirmed(true);
 				subscription.setConfirmDate(new Date());
-				insertOrUpdateSubsAndIndexes(subscription, null);
+				insertOrUpdateSubsAndIndexes(subscription, 0);
 
 				// auto confirm subscription to cqs queue by owner
 			} else if (protocol.equals(CnsSubscriptionProtocol.cqs)) {
@@ -370,7 +372,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 					subscription.setConfirmed(true);
 					subscription.setConfirmDate(new Date());
 
-					insertOrUpdateSubsAndIndexes(subscription, null);
+					insertOrUpdateSubsAndIndexes(subscription, 0);
 					if (retrievedSubscription == null) {
 						PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(subscription.getTopicArn(), "subscriptionConfirmed");
 
@@ -462,13 +464,12 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		return listSubscriptions(nextToken, protocol, userId, true);
 	}
 
-	private List<CNSSubscription> listSubscriptions(String paging, CnsSubscriptionProtocol protocol, String userId, boolean hidePendingArn) throws Exception {
-		//TODO: fix paging
+	private List<CNSSubscription> listSubscriptions(String nextToken, CnsSubscriptionProtocol protocol, String userId, boolean hidePendingArn) throws Exception {
 		//Algorithm is to keep reading in chunks of 100 till we've seen 500 from the nextToken-ARN
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
 		List<CNSSubscription> userSubscriptionArnIndex;
 		//read form index to get sub-arn
-		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setString("user_id", userId), paging, 100);
+		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setString("user_id", userId).setString("last_subscription_arn", nextToken == null? "" : nextToken), null, 100);
 
 		if (userSubscriptionArnIndex == null || userSubscriptionArnIndex.isEmpty()) {
 			return l;
@@ -520,7 +521,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	/**
 	 * Enumerate all subs in a topic
 	 *
-	 * @param paging      The ARN of the last sub-returned or null is first time call.
+	 * @param nextToken      The ARN of the last sub-returned or null is first time call.
 	 * @param topicArn
 	 * @param protocol
 	 * @param pageSize
@@ -529,8 +530,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	 * contain it for convenience
 	 * @throws Exception
 	 */
-	public List<CNSSubscription> listSubscriptionsByTopic(String paging, String topicArn, CnsSubscriptionProtocol protocol, int pageSize, boolean hidePendingArn) throws Exception {
-		//TODO: FIX PAGING
+	public List<CNSSubscription> listSubscriptionsByTopic(String nextToken, String topicArn, CnsSubscriptionProtocol protocol, int pageSize, boolean hidePendingArn) throws Exception {
 		//read from index to get composite-col-name corresponding to nextToken
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
 		CNSTopic topic = PersistenceFactory.getTopicPersistence().getTopic(topicArn);
@@ -539,7 +539,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		}
 
 
-		List<CNSSubscription> subscriptions = find(selectCNSTopicSubscriptions.bind().setString("topic_arn", topicArn), paging, pageSize);
+		List<CNSSubscription> subscriptions = find(selectCNSTopicSubscriptions.bind().setString("topic_arn", topicArn).setString("last_endpoint", nextToken == null ? "" : nextToken), null, pageSize);
 
 
 		if (subscriptions == null || subscriptions.size() == 0) {
@@ -593,7 +593,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		s.setConfirmDate(new Date());
 
 		//re-insert with no TTL. will clobber the old one which had ttl
-		insertOrUpdateSubsAndIndexes(s, null);
+		insertOrUpdateSubsAndIndexes(s, 0);
 
 		PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(s.getTopicArn(), "subscriptionPending");
 		PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(s.getTopicArn(), "subscriptionConfirmed");
@@ -693,7 +693,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		sub = getSubscription(subscriptionArn);
 		if (sub != null) {
 			sub.setRawMessageDelivery(rawMessageDelivery);
-			insertOrUpdateSubsAndIndexes(sub, null);
+			insertOrUpdateSubsAndIndexes(sub, 0);
 		}
 	}
 

@@ -38,6 +38,7 @@ import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.gt;
 
 /**
  * Provide Cassandra persistence for topics
@@ -88,6 +89,7 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 		selectCNSTopicsByUserId = session.prepare(
 			QueryBuilder.select().from("cns", columnFamilyTopicsByUserId)
 				.where(eq("user_id", bindMarker("user_id")))
+				.and(gt("topic_arn", bindMarker("last_topic")))
 		);
 
 		deleteCNSTopics = session.prepare(
@@ -170,28 +172,26 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			
-		return findAll(selectCNSTopicsByUserId.bind().setString("user_id", userId)).size();
+		return findAll(selectCNSTopicsByUserId.bind().setString("user_id", userId).setString("last_topic", "")).size();
 	}
 
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception {
-		//TODO: Fix Paging
-
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-		List<CNSTopic> userTopics = find(selectCNSTopicsByUserId.bind().setString("user_id", userId), nextToken, 100);
+		List<CNSTopic> userTopics = find(selectCNSTopicsByUserId.bind().setString("user_id", userId).setString("last_topic", nextToken == null ? "" : nextToken ),null, 100);
 
-		if (userTopics == null) {
+		if (userTopics == null || userTopics.isEmpty()) {
 			return topics;
 		}
 			
 		for (CNSTopic userTopic : userTopics) {
 			CNSTopic topic = getTopic(userTopic.getArn());
-			if (topic!= null) {
-				topic.setNextPage(userTopic.getNextPage());
-				topics.add(topic);
 
-			} else {
+			if (topic == null) {
 				save(deleteCNSTopicsByUserId.bind().setString("user_id", userTopic.getUserId()).setString("topic_arn", userTopic.getArn()));
+				continue;
 			}
+
+			topics.add(topic);
 		}
 
 		return topics;
