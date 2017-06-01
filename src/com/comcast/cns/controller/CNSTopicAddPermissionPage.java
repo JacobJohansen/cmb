@@ -15,22 +15,20 @@
  */
 package com.comcast.cns.controller;
 
+import com.amazonaws.services.sns.model.AddPermissionRequest;
+import com.comcast.cmb.common.controller.AdminServletBase;
+import com.comcast.cqs.controller.CQSAddQueuePermissionPage;
+import org.apache.log4j.Logger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
-import com.amazonaws.services.sns.model.AddPermissionRequest;
-import com.comcast.cmb.common.controller.AdminServletBase;
-import com.comcast.cqs.controller.CQSAddQueuePermissionPage;
 
 /**
  * Add permission to topic admin page

@@ -63,12 +63,12 @@ public class CQSConstants {
 	public static final String COL_NAME = "name";
 	public static final String COL_OWNER_USER_ID = "ownerUserId";
 	public static final String COL_REGION = "region";
-	public static final String COL_VISIBILITY_TO = "visibilityTO";
-	public static final String COL_MAX_MSG_SIZE = "maxMsgSize";
-	public static final String COL_MSG_RETENTION_PERIOD = "msgRetentionPeriod";
-	public static final String COL_DELAY_SECONDS = "delaySeconds";
+	public static final String COL_VISIBILITY_TO = "visibility_timeout";
+	public static final String COL_MAX_MSG_SIZE = "max_message_size";
+	public static final String COL_MSG_RETENTION_PERIOD = "message_retention_period";
+	public static final String COL_DELAY_SECONDS = "delay_seconds";
 	public static final String COL_POLICY = "policy";
-	public static final String COL_CREATED_TIME = "createdTime";
+	public static final String COL_CREATED_TIME = "created_time";
 	public static final String COL_HOST_NAME = "hostName";
 	public static final String COL_WAIT_TIME_SECONDS = "waitTimeSeconds";
 	public static final String COL_NUMBER_PARTITIONS = "numOfPartitions";

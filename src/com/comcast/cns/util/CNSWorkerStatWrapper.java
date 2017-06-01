@@ -41,11 +41,11 @@ import java.util.List;
 public class CNSWorkerStatWrapper {
 	
 	private static Logger logger = Logger.getLogger(CNSWorkerStatWrapper.class);
-	private static final String CNS_WORKERS = "CNSWorkers";
+	private static final String CNS_WORKERS = "cns_workers";
 	public static List<CNSWorkerStats> getCassandraWorkerStats() throws PersistenceException {
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(
-			QueryBuilder.select().all().from("CNS", CNS_WORKERS)
+			QueryBuilder.select().all().from("cns", CNS_WORKERS)
 		);
 
 
@@ -55,12 +55,12 @@ public class CNSWorkerStatWrapper {
 
 			stats.setIpAddress(row.getString("host"));
 
-			if (!row.isNull("producerTimestamp")) {
-				stats.setProducerTimestamp(Long.parseLong(row.getString("producerTimestamp")));
+			if (!row.isNull("producer_timestamp")) {
+				stats.setProducerTimestamp(Long.parseLong(row.getString("producer_timestamp")));
 			}
 
-			if (!row.isNull("consumerTimestamp")) {
-				stats.setConsumerTimestamp(Long.parseLong(row.getString("consumerTimestamp")));
+			if (!row.isNull("consumer_timestamp")) {
+				stats.setConsumerTimestamp(Long.parseLong(row.getString("consumer_timestamp")));
 			}
 
 			if (!row.isNull("jmxport")) {
@@ -71,8 +71,8 @@ public class CNSWorkerStatWrapper {
 				stats.setMode(row.getString("mode"));
 			}
 
-			if (!row.isNull("dataCenter")) {
-				stats.setDataCenter(row.getString("dataCenter"));
+			if (!row.isNull("data_center")) {
+				stats.setDataCenter(row.getString("data_center"));
 			}
 			statsList.add(stats);
 		}

@@ -36,24 +36,24 @@ public abstract class AbstractDurablePersistence {
 		public static final CmbLongSerializer LONG_SERIALIZER = new CmbLongSerializer();
 	};
 	
-	public static final String CNS_TOPICS = "CNSTopics";
-	public static final String CNS_TOPICS_BY_USER_ID = "CNSTopicsByUserId";
-	public static final String CNS_TOPIC_SUBSCRIPTIONS = "CNSTopicSubscriptions";
-	public static final String CNS_TOPIC_SUBSCRIPTIONS_INDEX = "CNSTopicSubscriptionsIndex";
-	public static final String CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX = "CNSTopicSubscriptionsUserIndex";
-	public static final String CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX = "CNSTopicSubscriptionsTokenIndex";
-	public static final String CNS_TOPIC_ATTRIBUTES = "CNSTopicAttributes";
-	public static final String CNS_SUBSCRIPTION_ATTRIBUTES = "CNSSubscriptionAttributes";
-	public static final String CNS_TOPIC_STATS = "CNSTopicStats";
-	public static final String CNS_WORKERS = "CNSWorkers";
-	public static final String CNS_API_SERVERS = "CNSAPIServers";
+	public static final String CNS_TOPICS = "cns_topics";
+	public static final String CNS_TOPICS_BY_USER_ID = "cns_topics_by_user_id";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS = "cns_topic_subscriptions";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_INDEX = "cns_topic_subscriptions_index";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX = "cns_topic_subscriptions_user_index";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX = "cns_topic_subscriptions_token_index";
+	public static final String CNS_TOPIC_ATTRIBUTES = "cns_topic_attributes";
+	public static final String CNS_SUBSCRIPTION_ATTRIBUTES = "cns_subscription_attributes";
+	public static final String CNS_TOPIC_STATS = "cns_topic_stats";
+	public static final String CNS_WORKERS = "cns_workers";
+	public static final String CNS_API_SERVERS = "cns_api_servers";
 	
-	public static final String CQS_QUEUES = "CQSQueues";
-	public static final String CQS_QUEUES_BY_USER_ID = "CQSQueuesByUserId";
-	public static final String CQS_PARTITIONED_QUEUE_MESSAGES = "CQSPartitionedQueueMessages";
-	public static final String CQS_API_SERVERS = "CQSAPIServers";
+	public static final String CQS_QUEUES = "cqs_queues";
+	public static final String CQS_QUEUES_BY_USER_ID = "cqs_queues_by_user_id";
+	public static final String CQS_PARTITIONED_QUEUE_MESSAGES = "cqs_partitioned_queue_messages";
+	public static final String CQS_API_SERVERS = "cqs_api_servers";
 	
-	public static final String CMB_USERS = "Users";
+	public static final String CMB_USERS = "users";
 	
 	public static abstract class CmbSerializer {
 	}

@@ -15,26 +15,19 @@
  */
 package com.comcast.cns.test.unit;
 
+import com.amazonaws.services.sns.model.*;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.comcast.cmb.test.tools.CMBAWSBaseTest;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import org.junit.* ;
-
-import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
-import com.amazonaws.services.sns.model.GetTopicAttributesResult;
-import com.amazonaws.services.sns.model.ListSubscriptionsByTopicRequest;
-import com.amazonaws.services.sns.model.ListSubscriptionsByTopicResult;
-import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.RemovePermissionRequest;
-import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
-import com.amazonaws.services.sns.model.SubscribeRequest;
-import com.amazonaws.services.sns.model.AddPermissionRequest;
-
-import static org.junit.Assert.*;
-
+@Ignore
 public class CNSDeleteListTopicTest extends CMBAWSBaseTest {
 
 	@Test 

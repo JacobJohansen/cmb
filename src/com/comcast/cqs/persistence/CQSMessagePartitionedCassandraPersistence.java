@@ -57,7 +57,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
  */
 public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<CQSMessage> implements ICQSMessagePersistence {
 	
-	private static final String COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES = "CQSPartitionedQueueMessages";
+	private static final String COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES = "cqs_partitioned_queue_messages";
 	private static final Random rand = new Random();
 	private static Logger logger = Logger.getLogger(CQSMessagePartitionedCassandraPersistence.class);
 
@@ -70,10 +70,10 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 	public CQSMessagePartitionedCassandraPersistence() {
 		super(DurablePersistenceFactory.getInstance().getSession());
 		insertMessage = session.prepare(
-			QueryBuilder.insertInto("CQS", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
-				.value("queueShardPartition", bindMarker("queueShardPartition"))
-				.value("becomeVisibleTime", bindMarker("becomeVisibleTime"))
-				.value("nodeUUID", bindMarker("nodeUUID"))
+			QueryBuilder.insertInto("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
+				.value("queue_shard_partition", bindMarker("queue_shard_partition"))
+				.value("become_visible_time", bindMarker("become_visible_time"))
+				.value("node_uuid", bindMarker("node_uuid"))
 				.value("message", bindMarker("message"))
 				.using(ttl(bindMarker()))
 		);
@@ -81,32 +81,34 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		selectMessage = session.prepare(
 			QueryBuilder.select()
 						.all()
-						.from("CQS", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
-						.where(eq("queueShardPartition", bindMarker("queueShardPartition")))
-						.and(eq("becomeVisibleTime", bindMarker("becomeVisibleTime")))
-						.and(eq("nodeUUID", bindMarker("nodeUUID")))
+						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
+						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
+						.and(eq("become_visible_time", bindMarker("become_visible_time")))
+						.and(eq("node_uuid", bindMarker("node_uuid")))
 		);
 
 		selectMessages = session.prepare(
 			QueryBuilder.select()
 						.all()
-						.from("CQS", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
-						.where(eq("queueShardPartition", bindMarker("queueShardPartition")))
-						.and(lte("becomeVisibleTime", bindMarker("becomeVisibleTime")))
+						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
+						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
+//						.and(lte("become_visible_time", bindMarker("become_visible_time")))
 		);
+
+		// eq key, gte now - max age, (gt || lt handler)
 
 		deleteMessages = session.prepare(
 			QueryBuilder.delete()
-						.from("CQS", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
-						.where(eq("queueShardPartition", bindMarker("queueShardPartition")))
-						.and(eq("becomeVisibleTime", bindMarker("becomeVisibleTime")))
-						.and(eq("nodeUUID", bindMarker("nodeUUID")))
+						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
+						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
+						.and(eq("become_visible_time", bindMarker("become_visible_time")))
+						.and(eq("node_uuid", bindMarker("node_uuid")))
 		);
 
 		deleteAllMessagesPartitionAndShard = session.prepare(
 			QueryBuilder.delete()
-						.from("CQS", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
-						.where(eq("queueShardPartition", bindMarker("queueShardPartition")))
+						.from("cqs", COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES)
+						.where(eq("queue_shard_partition", bindMarker("queue_shard_partition")))
 		);
 	}
 
@@ -151,11 +153,11 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 
 		save(
 			insertMessage.bind()
-						 .setString("queueShardPartition", key)
-						 .setLong("becomeVisibleTime", becomeVisibleTime)
-						 .setLong("nodeUUID", nodeUUID)
+						 .setString("queue_shard_partition", key)
+						 .setLong("become_visible_time", becomeVisibleTime)
+						 .setLong("node_uuid", nodeUUID)
 						 .setString("message", getMessageJSON(message))
-						 .setLong("[ttl]", ttl)
+						 .setInt("[ttl]", ttl)
 		);
 
 		return message.getMessageId();
@@ -260,11 +262,11 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " delay_sec=" + delaySeconds + " key=" + key + " col=" + message.getMessageId());
 
 			boundStatements.add(insertMessage.bind()
-											 .setString("queueShardPartition", key)
-											 .setLong("becomeVisibleTime", becomeVisibleTime)
-											 .setLong("nodeUUID", nodeUUID)
+											 .setString("queue_shard_partition", key)
+											 .setLong("become_visible_time", becomeVisibleTime)
+											 .setLong("node_uuid", nodeUUID)
 											 .setString("message", getMessageJSON(message))
-											 .setLong("[ttl]", ttl));
+											 .setInt("[ttl]", ttl));
 
 			ret.put(message.getSuppliedMessageId(), message.getMessageId());
 		}
@@ -290,11 +292,11 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		}
 
 		logger.debug("event=delete_message receipt_handle=" + receiptHandle + " col=" + receiptHandle);
-		save(
+		delete(
 			deleteMessages.bind()
-						  .setString("queueShardPartition", receiptHandleParts[0])
-						  .setLong("becomeVisibleTime", Long.parseLong(receiptHandleParts[1]))
-						  .setLong("nodeUUID", Long.parseLong(receiptHandleParts[2]))
+						  .setString("queue_shard_partition", receiptHandleParts[0])
+						  .setLong("become_visible_time", Long.parseLong(receiptHandleParts[1]))
+						  .setLong("node_uuid", Long.parseLong(receiptHandleParts[2]))
 		);
 	}
 
@@ -310,18 +312,44 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 
 	@Override
 	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws IOException, NoSuchAlgorithmException, JSONException, PersistenceException {
-		String queueHash = Util.hashQueueUrl(queueUrl);
-		String key;
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
+		String queueHash = Util.hashQueueUrl(queueUrl);
+		String key = queueHash + "_" + shard + "_0";
+		String handle = null;
 		
 		int numberPartitions = getNumberOfPartitions(queueUrl);
 		int numberShards = getNumberOfShards(queueUrl);
-		
+
+		if (nextReceiptHandle != null) {
+			handle = nextReceiptHandle;
+		} else if (previousReceiptHandle != null) {
+			handle = previousReceiptHandle;
+		}
+
+		if (handle != null) {
+			String[] handleParts = handle.split(":");
+
+			if (handleParts.length != 3) {
+				logger.error("event=peek_queue error_code=corrupt_receipt_handle receipt_handle=" + handle);
+				throw new IllegalArgumentException("Corrupt receipt handle " + handle);
+			}
+			key = handleParts[0];
+		}
+
+		String[] queueParts = key.split("_");
+
+		if (queueParts.length != 3) {
+			logger.error("event=peek_queue error_code=invalid_queue_key key=" + key);
+			throw new IllegalArgumentException("Invalid queue key " + key);
+		}
+
+
+
 		logger.debug("event=peek_queue queue_url=" + queueUrl + " prev_receipt_handle=" + previousReceiptHandle + " next_receipt_handle=" + nextReceiptHandle + " length=" + length + " num_partitions=" + numberPartitions);
 
-		
-		int shardNumber = shard;
-		int partitionNumber = 0;
+
+		int shardNumber = Integer.parseInt(queueParts[1]);
+		int partitionNumber = Integer.parseInt(queueParts[2]);
 		
 		if (shardNumber < 0 || shardNumber > numberShards-1) {
 			logger.error("event=peek_queue error_code=invalid_shard_number shard_number=" + shardNumber);
@@ -329,19 +357,12 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		}
 
 		while (messageList.size() < length && -1 < partitionNumber && partitionNumber < numberPartitions) {
-			
 			key = queueHash + "_" + shardNumber + "_" + partitionNumber;
+			List<CQSMessage> page = find(selectMessages.bind().setString("queue_shard_partition", key), null, length - messageList.size() + 1);
 
-			messageList.addAll(find(selectMessages.bind().setString("queueShardPartition", key), null, length - messageList.size()));
 
-			if (previousReceiptHandle != null) {
-				partitionNumber++;
-			} else if (nextReceiptHandle != null) {
-				partitionNumber--;
-			} else {
-				partitionNumber++;
-			}
 
+			partitionNumber++;
 		}
 		
 		return messageList;
@@ -358,7 +379,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 		for (int i=0; i<numberPartitions; i++) {
 			String key = Util.hashQueueUrl(queueUrl) + "_" + shard + "_" + i;
 			clearAllPartitions.add(
-				deleteAllMessagesPartitionAndShard.bind().setString("queueShardPartition", key)
+				deleteAllMessagesPartitionAndShard.bind().setString("queue_shard_partition", key)
 			);
 		}
 
@@ -385,7 +406,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 				throw new IllegalArgumentException("Invalid message id " + id);
 			}
 
-			statements.add(selectMessage.bind().setString("queueShardPartition", idParts[0]).setLong("becomeVisibleTime", Long.parseLong(idParts[1])).setLong("nodeUUID",Long.parseLong(idParts[2])));
+			statements.add(selectMessage.bind().setString("queue_shard_partition", idParts[0]).setLong("become_visible_time", Long.parseLong(idParts[1])).setLong("node_uuid",Long.parseLong(idParts[2])));
 		}
 		
 		return find(statements).stream().collect(Collectors.toMap(CQSMessage::getMessageId, Function.identity()));
@@ -494,7 +515,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
                 
             	int partition = rc.getNext();
                 String key = queueHash + "_" + shard + "_" + partition;
-                messageList.addAll(find(selectMessages.bind().setString("queueShardPartition", key), null, 1));
+                messageList.addAll(find(selectMessages.bind().setString("queue_shard_partition", key), null, 1));
             }
             
             return messageList;
@@ -630,7 +651,7 @@ public class CQSMessagePartitionedCassandraPersistence extends BaseCassandraDao<
 				m.setMessageAttributes(ma);
 			}
 
-			m.setTimebasedId(row.getLong("becomeVisibleTime"));
+			m.setTimebasedId(row.getLong("become_visible_time"));
 
 			if (m.getAttributes() != null && m.getAttributes().containsKey("isCompressed") && Boolean.parseBoolean(m.getAttributes().get("isCompressed"))) {
 				m.setBody(Util.decompress(m.getBody()));

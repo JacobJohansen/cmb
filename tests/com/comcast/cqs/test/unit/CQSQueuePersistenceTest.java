@@ -15,20 +15,6 @@
  */
 package com.comcast.cqs.test.unit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -41,6 +27,16 @@ import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
 import com.comcast.cqs.util.CQSConstants;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.*;
 
 public class CQSQueuePersistenceTest {
 

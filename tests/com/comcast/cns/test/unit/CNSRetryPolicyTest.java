@@ -15,20 +15,19 @@
  */
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.*;
-
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.model.CNSModelConstructionException;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class CNSRetryPolicyTest {
 	private static Logger logger = Logger.getLogger(CNSRetryPolicyTest.class);
@@ -58,13 +57,13 @@ public class CNSRetryPolicyTest {
 		        "}";
 			  
 			  String retryPolicy2 = "{"+
-					  "\"backoffFunction\":\"linear\","+
-					  "\"numMinDelayRetries\":0," + 
+				      "\"numNoDelayRetries\":0," +
+				      "\"minDelayTarget\":1,"+
 					  "\"numMaxDelayRetries\":4,"+
 					  "\"numRetries\":4,"+
-				      "\"minDelayTarget\":1,"+
-				      "\"numNoDelayRetries\":0," +
-				      "\"maxDelayTarget\":2"+				        
+				      "\"maxDelayTarget\":2,"+
+					  "\"numMinDelayRetries\":0," +
+				  	  "\"backoffFunction\":\"linear\""+
 				        "}";
 			  
 			  String retryPolicy3 = "{"+
@@ -82,7 +81,8 @@ public class CNSRetryPolicyTest {
 				assertTrue(rpolicy.getBackOffFunction() == CnsBackoffFunction.linear);
 				logger.debug("retryPolicy2: " + retryPolicy2);
 				logger.debug("rpolicy is: " + rpolicy.toString());
-				assertTrue(rpolicy.toString().equals(retryPolicy2));
+				String debugPolicy = rpolicy.toString();
+				assertTrue(debugPolicy.equals(retryPolicy2));
 				
 				JSONObject respJSON = rpolicy.toJSON();
 				assertTrue(respJSON.has("backoffFunction"));

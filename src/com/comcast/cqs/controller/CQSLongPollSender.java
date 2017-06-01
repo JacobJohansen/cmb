@@ -52,7 +52,7 @@ public class CQSLongPollSender {
     private static volatile boolean initialized = false;
     private static volatile String localhost;
     
-    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public static final String CQS_API_SERVERS = "cqs_api_servers";
     
     
     // last minute long poll sender checked for api server heart beats
@@ -144,7 +144,7 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CQS","CQSAPIServers"));
+	        		ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("cqs","cqs_api_servers"));
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		
@@ -171,8 +171,8 @@ public class CQSLongPollSender {
 							stats.setLongPollPort(longpollPort);
 						}
 
-						if (!row.isNull("dataCenter")) {
-							dataCenter = row.getString("dataCenter");
+						if (!row.isNull("data_center")) {
+							dataCenter = row.getString("data_center");
 							stats.setDataCenter(dataCenter);
 						}
 

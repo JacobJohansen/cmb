@@ -29,6 +29,7 @@ import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CnsSubscriptionProtocol;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.model.CQSQueue;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Statement;
@@ -59,11 +60,11 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 
 	private static Logger logger = Logger.getLogger(CNSSubscriptionCassandraPersistence.class);
 
-	private static final String columnFamilySubscriptions = "CNSTopicSubscriptions";
-	private static final String columnFamilySubscriptionsIndex = "CNSTopicSubscriptionsIndex";
-	private static final String columnFamilySubscriptionsUserIndex = "CNSTopicSubscriptionsUserIndex";
-	private static final String columnFamilySubscriptionsTokenIndex = "CNSTopicSubscriptionsTokenIndex";
-	private static final String columnFamilyTopicStats = "CNSTopicStats";
+	private static final String columnFamilySubscriptions = "cns_topic_subscriptions";
+	private static final String columnFamilySubscriptionsIndex = "cns_topic_subscriptions_index";
+	private static final String columnFamilySubscriptionsUserIndex = "cns_topic_subscriptions_user_index";
+	private static final String columnFamilySubscriptionsTokenIndex = "cns_topic_subscriptions_token_index";
+	private static final String columnFamilyTopicStats = "cns_topic_stats";
 
 	private final PreparedStatement upsertCNSTopicSubscriptions;
 	private final PreparedStatement upsertCNSTopicSubscriptionsIndex;
@@ -84,142 +85,152 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	public CNSSubscriptionCassandraPersistence() {
 		super(DurablePersistenceFactory.getInstance().getSession());
 		upsertCNSTopicSubscriptions = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilySubscriptions)
-						.value("topicArn", bindMarker("topicArn"))
+			QueryBuilder.insertInto("cns", columnFamilySubscriptions)
+						.value("topic_arn", bindMarker("topic_arn"))
 						.value("endpoint", bindMarker("endpoint"))
 						.value("protocol", bindMarker("protocol"))
-						.value("subscriptionJson", bindMarker("subscriptionJson"))
-						.using(ttl(bindMarker("ttl")))
+						.value("subscription_json", bindMarker("subscription_json"))
+						.using(ttl(bindMarker()))
 		);
 
 
 		upsertCNSTopicSubscriptionsIndex = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilySubscriptionsIndex)
-						.value("subscriptionArn", bindMarker("subscriptionArn"))
+			QueryBuilder.insertInto("cns", columnFamilySubscriptionsIndex)
+						.value("subscription_arn", bindMarker("subscription_arn"))
 						.value("endpoint", bindMarker("endpoint"))
+						.value("topic_arn", bindMarker("topic_arn"))
 						.value("protocol", bindMarker("protocol"))
-						.using(ttl(bindMarker("ttl")))
+						.using(ttl(bindMarker()))
 		);
 
 		upsertCNSTopicSubscriptionsUserIndex = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilySubscriptionsUserIndex)
-						.value("userId", bindMarker("userId"))
-						.value("subscriptionArn", bindMarker("subscriptionArn"))
-						.using(ttl(bindMarker("ttl")))
+			QueryBuilder.insertInto("cns", columnFamilySubscriptionsUserIndex)
+						.value("user_id", bindMarker("user_id"))
+						.value("subscription_arn", bindMarker("subscription_arn"))
+						.using(ttl(bindMarker()))
 		);
 
 		upsertCNSTopicSubscriptionsTokenIndex = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilySubscriptionsTokenIndex)
-						.value("token", bindMarker("token"))
-						.value("subscriptionArn", bindMarker("subscriptionArn"))
-						.using(ttl(bindMarker("ttl")))
+			QueryBuilder.insertInto("cns", columnFamilySubscriptionsTokenIndex)
+						.value("subscription_token", bindMarker("subscription_token"))
+						.value("subscription_arn", bindMarker("subscription_arn"))
+						.using(ttl(bindMarker()))
 		);
 
 		selectCNSTopicSubscriptions = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CNS", columnFamilySubscriptions)
-				.where(eq("topicArn", bindMarker("topicArn")))
+				.from("cns", columnFamilySubscriptions)
+				.where(eq("topic_arn", bindMarker("topic_arn")))
 		);
 
 		selectCNSTopicSubscriptionsIndex = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CNS", columnFamilySubscriptionsIndex)
-				.where(eq("subscriptionArn", bindMarker("subscriptionArn")))
+				.from("cns", columnFamilySubscriptionsIndex)
+				.where(eq("subscription_arn", bindMarker("subscription_arn")))
 		);
 
 		selectCNSTopicSubscriptionsUserIndex = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CNS", columnFamilySubscriptionsUserIndex)
-				.where(eq("userId", bindMarker("userId")))
+				.from("cns", columnFamilySubscriptionsUserIndex)
+				.where(eq("user_id", bindMarker("user_id")))
 		);
 
 		selectCNSTopicSubscriptionsTokenIndex = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CNS", columnFamilySubscriptionsTokenIndex)
-				.where(eq("token", bindMarker("token")))
+				.from("cns", columnFamilySubscriptionsTokenIndex)
+				.where(eq("subscription_token", bindMarker("subscription_token")))
 		);
 
 		deleteCNSTopicSubscriptions = session.prepare(
 			QueryBuilder.delete()
-						.from("CNS", columnFamilySubscriptions)
-						.where(eq("topicArn", bindMarker("topicArn")))
+						.from("cns", columnFamilySubscriptions)
+						.where(eq("topic_arn", bindMarker("topic_arn")))
 						.and(eq("endpoint", bindMarker("endpoint")))
 						.and(eq("protocol", bindMarker("protocol")))
 		);
 
 		deleteAllCNSTopicSubscriptions = session.prepare(
 			QueryBuilder.delete()
-						.from("CNS", columnFamilySubscriptions)
-						.where(eq("topicArn", bindMarker("topicArn")))
+						.from("cns", columnFamilySubscriptions)
+						.where(eq("topic_arn", bindMarker("topic_arn")))
 		);
 
 		deleteCNSTopicSubscriptionsIndex = session.prepare(
 			QueryBuilder.delete()
-						.from("CNS", columnFamilySubscriptionsIndex)
-						.where(eq("subscriptionArn", bindMarker("subscriptionArn")))
+						.from("cns", columnFamilySubscriptionsIndex)
+						.where(eq("subscription_arn", bindMarker("subscription_arn")))
 		);
 
 		deleteCNSTopicSubscriptionsUserIndex = session.prepare(
 			QueryBuilder.delete()
-						.from("CNS", columnFamilySubscriptionsUserIndex)
-						.where(eq("userId", bindMarker("userId")))
-						.and(eq("subscriptionArn", bindMarker("subscriptionArn")))
+						.from("cns", columnFamilySubscriptionsUserIndex)
+						.where(eq("user_id", bindMarker("user_id")))
+						.and(eq("subscription_arn", bindMarker("subscription_arn")))
 		);
 
 		deleteCNSTopicSubscriptionsTokenIndex = session.prepare(
 			QueryBuilder.delete()
-						.from("CNS", columnFamilySubscriptionsTokenIndex)
-						.where(eq("token", bindMarker("token")))
-						.and(eq("subscriptionArn", bindMarker("subscriptionArn")))
+						.from("cns", columnFamilySubscriptionsTokenIndex)
+						.where(eq("subscription_token", bindMarker("subscription_token")))
+						.and(eq("subscription_arn", bindMarker("subscription_arn")))
 		);
 
 	}
 
 	private String getColumnValuesJSON(CNSSubscription s) throws JSONException {
 
-		Writer writer = new StringWriter();
-		JSONWriter jw = new JSONWriter(writer);
-		jw = jw.object();
+		try {
+			Writer writer = new StringWriter();
+			JSONWriter jw = new JSONWriter(writer);
+			jw = jw.object();
 
-		if (s.getEndpoint() != null) {
-			jw.key("endPoint").value(s.getEndpoint());
+			if (s.getEndpoint() != null) {
+				jw.key("endPoint").value(s.getEndpoint());
+			}
+
+			if (s.getToken() != null) {
+				jw.key("subscription_token").value(s.getToken());
+			}
+
+			if (s.getArn() != null) {
+				jw.key("subArn").value(s.getArn());
+			}
+
+			if (s.getUserId() != null) {
+				jw.key("user_id").value(s.getUserId());
+			}
+
+			if (s.getConfirmDate() != null) {
+				jw.key("confirmDate").value(s.getConfirmDate().getTime() + "");
+			}
+
+			if (s.getProtocol() != null) {
+				jw.key("protocol").value(s.getProtocol().toString());
+			}
+
+			if (s.getRequestDate() != null) {
+				jw.key("requestDate").value(s.getRequestDate().getTime() + "");
+			}
+
+			jw.key("authenticateOnSubscribe").value(s.isAuthenticateOnUnsubscribe() + "");
+			jw.key("isConfirmed").value(s.isConfirmed() + "");
+
+			if (s.getRawMessageDelivery() != null) {
+				jw.key("rawMessageDelivery").value(s.getRawMessageDelivery() + "");
+			} else {
+				jw.key("rawMessageDelivery").value(Boolean.toString(false) + "");
+			}
+
+			jw.endObject();
+
+			return writer.toString();
+		} catch (Exception e) {
+			return "";
 		}
-
-		if (s.getToken() != null) {
-			jw.key("token").value(s.getToken());
-		}
-
-		if (s.getArn() != null) {
-			jw.key("subArn").value(s.getArn());
-		}
-
-		if (s.getUserId() != null) {
-			jw.key("userId").value(s.getUserId());
-		}
-
-		if (s.getConfirmDate() != null) {
-			jw.key("confirmDate").value(s.getConfirmDate().getTime() + "");
-		}
-
-		if (s.getProtocol() != null) {
-			jw.key("protocol").value(s.getProtocol().toString());
-		}
-
-		if (s.getRequestDate() != null) {
-			jw.key("requestDate").value(s.getRequestDate().getTime() + "");
-		}
-
-		jw.key("authenticateOnSubscribe").value(s.isAuthenticateOnUnsubscribe() + "");
-		jw.key("isConfirmed").value(s.isConfirmed() + "");
-		jw.key("rawMessageDelivery").value(s.getRawMessageDelivery() + "");
-
-		jw.endObject();
-
-		return writer.toString();
 	}
 
 	private static String getEndpointAndProtoIndexVal(String endpoint, CnsSubscriptionProtocol protocol) {
@@ -257,34 +268,49 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	}
 
 	private Statement saveCNSTopicSubscriptions(CNSSubscription subscription, Integer ttl) throws JSONException {
-		return upsertCNSTopicSubscriptions.bind()
-										  .setString("topicArn", subscription.getTopicArn())
-										  .setString("endpoint", subscription.getEndpoint())
-										  .setString("protocol", subscription.getProtocol().name())
-										  .setString("subscriptionJson", getColumnValuesJSON(subscription))
-										  .setInt("ttl", ttl);
+		BoundStatement statement = upsertCNSTopicSubscriptions.bind()
+															  .setString("topic_arn", subscription.getTopicArn())
+															  .setString("endpoint", subscription.getEndpoint())
+															  .setString("subscription_json", getColumnValuesJSON(subscription))
+															  .setString("protocol", subscription.getProtocol().name());
+
+		if (ttl != null) {
+			statement.setInt("[ttl]", ttl);
+		}
+
+		return statement;
 	}
 
 	private Statement saveCNSTopicSubscriptionsIndex(CNSSubscription subscription, Integer ttl) {
-		return upsertCNSTopicSubscriptionsIndex.bind()
-											   .setString("subscriptionArn", subscription.getArn())
-											   .setString("endpoint", subscription.getEndpoint())
-											   .setString("protocol", subscription.getProtocol().name())
-											   .setInt("ttl", ttl);
+		BoundStatement statement = upsertCNSTopicSubscriptionsIndex.bind()
+																   .setString("subscription_arn", subscription.getArn())
+																   .setString("topic_arn", subscription.getTopicArn())
+																   .setString("endpoint", subscription.getEndpoint())
+																   .setString("protocol", subscription.getProtocol().name());
+		if (ttl != null) {
+			statement.setInt("[ttl]", ttl);
+		}
+		return statement;
 	}
 
 	private Statement saveCNSTopicSubscriptionsUserIndex(CNSSubscription subscription, Integer ttl) {
-		return upsertCNSTopicSubscriptionsUserIndex.bind()
-												   .setString("userId", subscription.getUserId())
-												   .setString("subscriptionArn", subscription.getArn())
-												   .setInt("ttl", ttl);
+		BoundStatement statement = upsertCNSTopicSubscriptionsUserIndex.bind()
+												   .setString("user_id", subscription.getUserId())
+												   .setString("subscription_arn", subscription.getArn());
+		if (ttl != null) {
+			statement.setInt("[ttl]", ttl);
+		}
+		return statement;
 	}
 
 	private Statement saveCNSTopicSubscriptionsTokenIndex(CNSSubscription subscription, Integer ttl) {
-		return upsertCNSTopicSubscriptionsTokenIndex.bind()
-													.setString("token", subscription.getToken())
-													.setString("subscriptionArn", subscription.getArn())
-													.setInt("ttl", ttl);
+		BoundStatement statement = upsertCNSTopicSubscriptionsTokenIndex.bind()
+													.setString("subscription_token", subscription.getToken())
+													.setString("subscription_arn", subscription.getArn());
+		if (ttl != null) {
+			statement.setInt("[ttl]", ttl);
+		}
+		return statement;
 	}
 
 	public CNSSubscription subscribe(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) throws Exception {
@@ -375,10 +401,10 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	}
 
 	public CNSSubscription getSubscription(String arn) throws Exception {
-		CNSSubscription subscription = findOne(selectCNSTopicSubscriptionsIndex.bind().setString("subscriptionArn", arn));
+		CNSSubscription subscription = findOne(selectCNSTopicSubscriptionsIndex.bind().setString("subscription_arn", arn));
 
 		if (subscription != null) {
-			return findOne(selectCNSTopicSubscriptions.bind().setString("topicArn", subscription.getTopicArn()));
+			return findOne(selectCNSTopicSubscriptions.bind().setString("topic_arn", subscription.getTopicArn()));
 		}
 
 		return null;
@@ -390,7 +416,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		CNSSubscription s = new CNSSubscription(json.getString("subArn"));
 
 		s.setEndpoint(json.getString("endPoint"));
-		s.setUserId(json.getString("userId"));
+		s.setUserId(json.getString("user_id"));
 
 		if (json.has("confirmDate")) {
 			s.setConfirmDate(new Date(json.getLong("confirmDate")));
@@ -408,7 +434,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			s.setConfirmed(json.getBoolean("isConfirmed"));
 		}
 
-		s.setToken(json.getString("token"));
+		s.setToken(json.getString("subscription_token"));
 
 		if (json.has("authenticateOnSubscribe")) {
 			s.setAuthenticateOnUnsubscribe(json.getBoolean("authenticateOnSubscribe"));
@@ -437,12 +463,12 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	}
 
 	private List<CNSSubscription> listSubscriptions(String paging, CnsSubscriptionProtocol protocol, String userId, boolean hidePendingArn) throws Exception {
-
+		//TODO: fix paging
 		//Algorithm is to keep reading in chunks of 100 till we've seen 500 from the nextToken-ARN
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
 		List<CNSSubscription> userSubscriptionArnIndex;
 		//read form index to get sub-arn
-		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setString("userId", userId), paging, 100);
+		userSubscriptionArnIndex = find(selectCNSTopicSubscriptionsUserIndex.bind().setString("user_id", userId), paging, 100);
 
 		if (userSubscriptionArnIndex == null || userSubscriptionArnIndex.isEmpty()) {
 			return l;
@@ -504,7 +530,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	 * @throws Exception
 	 */
 	public List<CNSSubscription> listSubscriptionsByTopic(String paging, String topicArn, CnsSubscriptionProtocol protocol, int pageSize, boolean hidePendingArn) throws Exception {
-
+		//TODO: FIX PAGING
 		//read from index to get composite-col-name corresponding to nextToken
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
 		CNSTopic topic = PersistenceFactory.getTopicPersistence().getTopic(topicArn);
@@ -513,7 +539,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		}
 
 
-		List<CNSSubscription> subscriptions = find(selectCNSTopicSubscriptions.bind().setString("topicArn", topicArn), paging, pageSize);
+		List<CNSSubscription> subscriptions = find(selectCNSTopicSubscriptions.bind().setString("topic_arn", topicArn), paging, pageSize);
 
 
 		if (subscriptions == null || subscriptions.size() == 0) {
@@ -548,7 +574,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	public CNSSubscription confirmSubscription(boolean authenticateOnUnsubscribe, String token, String topicArn) throws Exception {
 
 		//get Sub-arn given token
-		CNSSubscription subscriptionByToken = findOne(selectCNSTopicSubscriptionsTokenIndex.bind().setString("token", token));
+		CNSSubscription subscriptionByToken = findOne(selectCNSTopicSubscriptionsTokenIndex.bind().setString("subscription_token", token));
 
 		if (subscriptionByToken == null) {
 			throw new CMBException(CMBErrorCodes.NotFound, "Resource not found.");
@@ -578,19 +604,23 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 	private void deleteIndexesAll(List<CNSSubscription> subscriptionList) throws PersistenceException {
 		List<Statement> statements = Lists.newArrayList();
 		for (CNSSubscription sub : subscriptionList) {
-			statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscriptionArn", sub.getArn()));
-			statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("token",sub.getToken()).setString("subscriptionArn", sub.getArn()));
-			statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("userId", sub.getUserId()).setString("subscriptionArn", sub.getArn()));
+			statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscription_arn", sub.getArn()));
+			if (sub.getToken() != null && !sub.getToken().isEmpty()) {
+				statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("subscription_token", sub.getToken()).setString("subscription_arn", sub.getArn()));
+			}
+			statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("user_id", sub.getUserId()).setString("subscription_arn", sub.getArn()));
 		}
-		save(statements);
+		delete(statements);
 	}
 
 	private void deleteIndexes(String subArn, String userId, String token) throws PersistenceException {
 		List<Statement> statements = Lists.newArrayList();
-		statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscriptionArn", subArn));
-		statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("token", token).setString("subscriptionArn", subArn));
-		statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("userId", userId).setString("subscriptionArn", subArn));
-		save(statements);
+		statements.add(deleteCNSTopicSubscriptionsIndex.bind().setString("subscription_arn", subArn));
+		if (token != null && !token.isEmpty()) {
+			statements.add(deleteCNSTopicSubscriptionsTokenIndex.bind().setString("subscription_token", token).setString("subscription_arn", subArn));
+		}
+		statements.add(deleteCNSTopicSubscriptionsUserIndex.bind().setString("user_id", userId).setString("subscription_arn", subArn));
+		delete(statements);
 	}
 
 	public void unsubscribe(String arn) throws Exception {
@@ -600,7 +630,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		if (s != null) {
 
 			deleteIndexes(arn, s.getUserId(), s.getToken());
-			save(deleteCNSTopicSubscriptions.bind().setString("topicArn", s.getArn()).setString("protocol", s.getProtocol().name()).setString("endpoint", s.getEndpoint()));
+			save(deleteCNSTopicSubscriptions.bind().setString("topic_arn", s.getArn()).setString("protocol", s.getProtocol().name()).setString("endpoint", s.getEndpoint()));
 
 			if (s.isConfirmed()) {
 				PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(s.getTopicArn(), "subscriptionConfirmed");
@@ -624,10 +654,9 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 
 		// for pagination to work we need the nextToken's corresponding sub to not be deleted.
 
-		CNSSubscription nextTokenSub = null;
+		CNSSubscription nextTokenSub;
 
 		while (subs.size() > 0) {
-
 			if (subs.size() < pageSize) {
 				deleteIndexesAll(subs);
 				PersistenceFactory.getCNSTopicAttributePersistence().incrementCounter(topicArn, "subscriptionDeleted", subs.size());
@@ -656,7 +685,7 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			PersistenceFactory.getCNSTopicAttributePersistence().decrementCounter(topicArn, "subscriptionPending", (int) subscriptionPending);
 		}
 
-		save(deleteAllCNSTopicSubscriptions.bind().setString("topicArn", topicArn));
+		save(deleteAllCNSTopicSubscriptions.bind().setString("topic_arn", topicArn));
 	}
 
 	public void setRawMessageDelivery(String subscriptionArn, boolean rawMessageDelivery) throws Exception {
@@ -679,8 +708,8 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 		String userId = null;
 		CNSSubscription subscription = null;
 
-		if (row.getColumnDefinitions().contains("topicArn")) {
-			topicArn = row.getString("topicArn");
+		if (row.getColumnDefinitions().contains("topic_arn")) {
+			topicArn = row.getString("topic_arn");
 		}
 
 		if (row.getColumnDefinitions().contains("endpoint")) {
@@ -691,20 +720,20 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			protocol = row.getString("protocol");
 		}
 
-		if (row.getColumnDefinitions().contains("subscriptionJson")) {
-			subscriptionJson = row.getString("subscriptionJson");
+		if (row.getColumnDefinitions().contains("subscription_json")) {
+			subscriptionJson = row.getString("subscription_json");
 		}
 
-		if (row.getColumnDefinitions().contains("subscriptionArn")) {
-			subscriptionArn = row.getString("subscriptionArn");
+		if (row.getColumnDefinitions().contains("subscription_arn")) {
+			subscriptionArn = row.getString("subscription_arn");
 		}
 
-		if (row.getColumnDefinitions().contains("token")) {
-			token = row.getString("token");
+		if (row.getColumnDefinitions().contains("subscription_token")) {
+			token = row.getString("subscription_token");
 		}
 
-		if (row.getColumnDefinitions().contains("userId")) {
-			userId = row.getString("userId");
+		if (row.getColumnDefinitions().contains("user_id")) {
+			userId = row.getString("user_id");
 		}
 
 
@@ -716,8 +745,10 @@ public class CNSSubscriptionCassandraPersistence extends BaseCassandraDao<CNSSub
 			}
 		}
 
-		if (subscription == null) {
+		if (subscription == null && protocol != null && !protocol.isEmpty()) {
 			subscription = new CNSSubscription(endpoint, CnsSubscriptionProtocol.valueOf(protocol),topicArn, userId);
+		} else if (subscription == null) {
+			subscription = new CNSSubscription(subscriptionArn);
 		}
 
 		if (token != null) {

@@ -14,14 +14,6 @@
  * limitations under the License.
  */package com.comcast.cmb.test.tools;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNSClient;
@@ -39,6 +31,13 @@ import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class CMBAWSBaseTest {
 	

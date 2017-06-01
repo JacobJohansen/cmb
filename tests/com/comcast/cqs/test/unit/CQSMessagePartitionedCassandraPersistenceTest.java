@@ -271,7 +271,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int k=0; k<numberOfShards; k++) {
 			for (int i=0; i<numberOfPartitions; i++) {
 				String queueKey = queueHash + "_" + k + "_" + i;
-				long partitionCount = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages").where(QueryBuilder.eq("queueShardPartition", queueKey))).all().size();
+				long partitionCount = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from(CMBProperties.getInstance().getCQSKeyspace(), "cqs_partitioned_queue_messages").where(QueryBuilder.eq("queue_shard_partition", queueKey))).all().size();
 				messageCount += partitionCount;
 				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
 			}

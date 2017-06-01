@@ -16,6 +16,7 @@
 package com.comcast.cns.persistence;
 
 import com.comcast.cmb.common.persistence.*;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -33,7 +34,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandraDao<CNSSubscriptionAttributes> implements ICNSSubscriptionAttributesPersistence {
 
-	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
+	private static final String columnFamilySubscriptionAttributes = "cns_subscription_attributes";
 	private static Logger logger = Logger.getLogger(CNSSubscriptionAttributesCassandraPersistence.class);
 	private static final CassandraDataStaxPersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 
@@ -45,55 +46,54 @@ public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandra
 
 		getSubscriptionAttributes = session.prepare(
 			QueryBuilder.select().all()
-						.from("CNS", "CNSSubscriptionAttributes")
-						.where(eq("subscriptionArn", bindMarker("subscriptionArn")))
+						.from("cns", "cns_subscription_attributes")
+						.where(eq("subscription_arn", bindMarker("subscription_arn")))
 						.limit(1)
 			);
 
 		insertSubscriptionAttributes =  session.prepare(
-			QueryBuilder.insertInto("CNS", "CNSSubscriptionAttributes")
-						.value("subscriptionArn", bindMarker("subscriptionArn"))
-						.value("confirmationWasAuthenticated", bindMarker("confirmationWasAuthenticated"))
-						.value("deliveryPolicy", bindMarker("deliveryPolicy"))
-						.value("effectiveDeliveryPolicy", bindMarker("effectiveDeliveryPolicy"))
-						.value("topicArn", bindMarker("topicArn"))
-						.value("userId", bindMarker("userId"))
+			QueryBuilder.insertInto("cns", "cns_subscription_attributes")
+						.value("subscription_arn", bindMarker("subscription_arn"))
+						.value("confirmation_was_authenticated", bindMarker("confirmation_was_authenticated"))
+						.value("delivery_policy", bindMarker("delivery_policy"))
+						.value("topic_arn", bindMarker("topic_arn"))
+						.value("user_id", bindMarker("user_id"))
 		);
 	}
 
 
 
 	public void setSubscriptionAttributes(CNSSubscriptionAttributes subscriptionAtributes, String subscriptionArn) throws Exception {
-		save(Lists.newArrayList(insertSubscriptionAttributes.bind()
-															.setString("subscriptionArn", subscriptionArn)
-															.setBool("confirmationWasAuthenticated", subscriptionAtributes.isConfirmationWasAuthenticated())
-															.setString("deliveryPolicy", subscriptionAtributes.getDeliveryPolicy().toJSON().toString())
-															.setString("effectiveDeliveryPolicy", subscriptionAtributes.getEffectiveDeliveryPolicy().toJSON().toString())
-															.setString("topicArn", subscriptionAtributes.getTopicArn())
-															.setString("userId", subscriptionAtributes.getUserId())
-		));
+		BoundStatement statement = insertSubscriptionAttributes.bind()
+															   .setString("subscription_arn", subscriptionArn)
+															   .setBool("confirmation_was_authenticated", subscriptionAtributes.isConfirmationWasAuthenticated())
+															   .setString("topic_arn", subscriptionAtributes.getTopicArn())
+															   .setString("user_id", subscriptionAtributes.getUserId());
+		if (subscriptionAtributes.getDeliveryPolicy() != null) {
+			statement.setString("delivery_policy", subscriptionAtributes.getDeliveryPolicy().toJSON().toString());
+		}
+
+		save(Lists.newArrayList(statement));
 
 		String topicArn = com.comcast.cns.util.Util.getCnsTopicArn(subscriptionArn);
 		CNSCache.removeTopicAttributes(topicArn);
 	}
 
 	public CNSSubscriptionAttributes getSubscriptionAttributes(String subscriptionArn) throws Exception {
-		return findOne(getSubscriptionAttributes.bind().setString("subscriptionArn", subscriptionArn));
+		return findOne(getSubscriptionAttributes.bind().setString("subscription_arn", subscriptionArn));
 	}
 
 	@Override
 	protected CNSSubscriptionAttributes convertToInstance(Row row) {
-		CNSSubscriptionAttributes subscriptionAttributes = new CNSSubscriptionAttributes(row.getString("topicArn"), row.getString("subscriptionArn"), row.getString("userId"));
+		CNSSubscriptionAttributes subscriptionAttributes = new CNSSubscriptionAttributes(row.getString("topic_arn"), row.getString("subscription_arn"), row.getString("user_id"));
 
 		try {
-			if (row.getColumnDefinitions().contains("confirmationWasAuthenticated") && !row.isNull("confirmationWasAuthenticated")) {
-
-				subscriptionAttributes.setConfirmationWasAuthenticated(row.getBool("confirmationWasAuthenticated"));
+			if (row.getColumnDefinitions().contains("confirmation_was_authenticated") && !row.isNull("confirmation_was_authenticated")) {
+				subscriptionAttributes.setConfirmationWasAuthenticated(row.getBool("confirmation_was_authenticated"));
 			}
 
-			if (row.getColumnDefinitions().contains("deliveryPolicy") && !row.isNull("deliveryPolicy")) {
-				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(row.getString("deliveryPolicy"))));
-
+			if (row.getColumnDefinitions().contains("delivery_policy") && !row.isNull("delivery_policy")) {
+				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(row.getString("delivery_policy"))));
 			}
 
 			// if "ignore subscription override" is checked, get effective delivery policy from topic delivery policy, otherwise
@@ -105,7 +105,7 @@ public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandra
 				throw new SubscriberNotFoundException("Subscription not found. arn=" + subscriptionAttributes.getSubscriptionArn());
 			}
 
-			CNSTopicAttributes topicAttributes = CNSTopicAttributesCassandraPersistence.getInstance().getTopicAttributes(subscription.getTopicArn());
+			CNSTopicAttributes topicAttributes = CNSTopicAttributesCassandraPersistence.getInstance().getTopicAttributes(subscriptionAttributes.getTopicArn());
 
 			if (topicAttributes != null) {
 
@@ -119,11 +119,14 @@ public class CNSSubscriptionAttributesCassandraPersistence extends BaseCassandra
 						effectiveDeliveryPolicy.setSicklyRetryPolicy(topicEffectiveDeliveryPolicy.getDefaultSicklyRetryPolicy());
 						effectiveDeliveryPolicy.setThrottlePolicy(topicEffectiveDeliveryPolicy.getDefaultThrottlePolicy());
 						subscriptionAttributes.setEffectiveDeliveryPolicy(effectiveDeliveryPolicy);
-					} else {
-						subscriptionAttributes.setEffectiveDeliveryPolicy(subscriptionAttributes.getDeliveryPolicy());
 					}
 				}
 			}
+
+			if (subscriptionAttributes.getEffectiveDeliveryPolicy() == null) {
+				subscriptionAttributes.setEffectiveDeliveryPolicy(subscriptionAttributes.getDeliveryPolicy());
+			}
+
 		} catch (Exception e) {
 			logger.error("Error parsing subscription attributes: " + e.toString());
 		}

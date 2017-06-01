@@ -15,14 +15,6 @@
  */
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.Random;
-
-import org.json.JSONObject;
-import org.junit.Test;
-
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.UnsubscribeRequest;
@@ -32,6 +24,13 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
+import org.json.JSONObject;
+import org.junit.Test;
+
+import java.util.Random;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class CNSPublishTest extends CMBAWSBaseTest {
 	
@@ -213,7 +212,7 @@ public class CNSPublishTest extends CMBAWSBaseTest {
 
 			subscribeRequest = new SubscribeRequest();
 			subscribeRequest.setEndpoint(endPoint);
-			subscribeRequest.setProtocol("cqs");
+			subscribeRequest.setProtocol("CQS");
 			subscribeRequest.setTopicArn(topicArn);
 			String subscriptionArn2 = cns1.subscribe(subscribeRequest).getSubscriptionArn();
 			

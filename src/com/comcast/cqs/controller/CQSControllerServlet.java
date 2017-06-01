@@ -62,7 +62,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
         messagePersistence = PersistenceFactory.getCQSMessagePersistence();
     }
     
-    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public static final String CQS_API_SERVERS = "cqs_api_servers";
     @Override
     public void init() throws ServletException {
         
@@ -174,14 +174,14 @@ public class CQSControllerServlet extends CMBControllerServlet {
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + serverIp + " port=" + serverPort);
 
                 cassandraHandler.execute(
-                      QueryBuilder.insertInto("CQS", "CQSAPIServers")
+                      QueryBuilder.insertInto("cqs", "cqs_api_servers")
                         .value("host",serverIp + ":" + serverPort)
                         .value("timestamp",now + "")
                         .value("port",CMBProperties.getInstance().getCQSLongPollPort() + "")
                         .value("jmxport",System.getProperty("com.sun.management.jmxremote.port", "0"))
-                        .value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
-                        .value("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl())
-                        .value("redisServerList", CMBProperties.getInstance().getRedisServerList())
+                        .value("data_center", CMBProperties.getInstance().getCMBDataCenter())
+                        .value("service_url", CMBProperties.getInstance().getCQSServiceUrl())
+                        .value("redis_server_list", CMBProperties.getInstance().getRedisServerList())
                 );
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

@@ -52,8 +52,8 @@ public class CNSManageServiceAction extends CNSAction {
 
 	private static Logger logger = Logger.getLogger(CNSManageServiceAction.class);
 	
-	public static final String CNS_API_SERVERS = "CNSAPIServers";
-	public static final String CNS_WORKERS = "CNSWorkers";
+	public static final String CNS_API_SERVERS = "cns_api_servers";
+	public static final String CNS_WORKERS = "cns_workers";
 	public CNSManageServiceAction() {
 		super("ManageService");
 	}
@@ -90,7 +90,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		if (task.equals("ClearWorkerQueues")) {
 
-			ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CNS", CNS_WORKERS));
+			ResultSet rows = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("cns", CNS_WORKERS));
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 			for (Row row : rows.all()) {
@@ -99,11 +99,11 @@ public class CNSManageServiceAction extends CNSAction {
 				String endpoint = row.getString("host");
 				stats.setIpAddress(endpoint);
 
-				if (!row.isNull("producerTimestamp")) {
-					stats.setProducerTimestamp(Long.parseLong(row.getString("producerTimestamp")));
+				if (!row.isNull("producer_timestamp")) {
+					stats.setProducerTimestamp(Long.parseLong(row.getString("producer_timestamp")));
 				}
-				if (!row.isNull("consumerTimestamp")) {
-					stats.setConsumerTimestamp(Long.parseLong(row.getString("consumerTimestamp")));
+				if (!row.isNull("consumer_timestamp")) {
+					stats.setConsumerTimestamp(Long.parseLong(row.getString("consumer_timestamp")));
 				}
 				if (!row.isNull("jmxport")) {
 					stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
@@ -151,7 +151,7 @@ public class CNSManageServiceAction extends CNSAction {
 			throw new CMBException(CMBErrorCodes.NotFound, "Cannot clear worker queues: Host " + host + " not found.");
 
 		} else if (task.equals("RemoveWorkerRecord")) {
-			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CNS", CNS_WORKERS).where(QueryBuilder.eq("host", host)));
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("cns", CNS_WORKERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;
@@ -164,7 +164,7 @@ public class CNSManageServiceAction extends CNSAction {
 	    	return true;
 
 		} else if (task.equals("RemoveRecord")) {
-			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CNS", CNS_API_SERVERS).where(QueryBuilder.eq("host", host)));
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("cns", CNS_API_SERVERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

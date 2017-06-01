@@ -1,13 +1,5 @@
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Test;
-
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
@@ -15,7 +7,16 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
+import org.junit.Ignore;
+import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+@Ignore
 public class CNSScaleTopicsTest extends CMBAWSBaseTest {
 
     private String queueUrl;

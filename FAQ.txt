@@ -64,12 +64,12 @@
    
    If CQS is working and you can publish to HTTP enpoints, then try publishing into a CQS queue.
    There are a few common pitfalls which are detailed below but if you use the same CMB user for creating
-   the queue and the topic it should be pretty straight-forward. Just make sure to choose "CQS" as
+   the queue and the topic it should be pretty straight-forward. Just make sure to choose "cqs" as
    the protocol when publishing into a CQS queue (not "SQS").
    
 5. How do I subscribe a CQS queue to a CNS topic? And what about subscriptions "pending confirmation"? 
 
-   When subscribing a CQS queue to a CNS topic you must choose "CQS" as the protocol, not "SQS"! 
+   When subscribing a CQS queue to a CNS topic you must choose "cqs" as the protocol, not "SQS"!
    Notice that when using the AWS Java SDK this means you have to write something like
    
    String queueUrl = createQueueResult.getQueueUrl();

@@ -104,12 +104,12 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 
 	        	try {
 					DurablePersistenceFactory.getInstance().getSession().execute(
-						QueryBuilder.insertInto("CNS", "CNSWorkers")
+						QueryBuilder.insertInto("cns", "cns_workers")
 							.value("host", hostAddress)
-							.value("producerTimestamp", System.currentTimeMillis() + "")
+							.value("producer_timestamp", System.currentTimeMillis() + "")
 							.value("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"))
 							.value("mode", CNSPublisher.getModeString())
-							.value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
+							.value("data_center", CMBProperties.getInstance().getCMBDataCenter())
 					);
 	            } catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
@@ -246,7 +246,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     				if (!subscription.getArn().equals("PendingConfirmation")) {
     	                allPendingConfirmation = false;
     	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn(), subscription.getRawMessageDelivery()));
-    	                nextToken = subscription.getArn();
+    	                nextToken = subscription.getNextPage();
     	            }
     	        }
     			

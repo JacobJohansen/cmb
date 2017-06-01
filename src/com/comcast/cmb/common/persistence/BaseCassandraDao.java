@@ -26,6 +26,24 @@ public abstract class BaseCassandraDao <T> {
         }
     }
 
+    public void delete(List<Statement> statements) {
+        List<ResultSetFuture> resultSetFutures = Lists.newArrayList();
+        statements.forEach(statement -> resultSetFutures.add(session.executeAsync(statement)));
+        for (ResultSetFuture result: resultSetFutures) {
+            while (!result.isDone()){
+                Thread.yield();
+            }
+        }
+    }
+
+    public void delete(Statement statement) {
+        ResultSetFuture resultSetFuture = session.executeAsync(statement);
+        while (!resultSetFuture.isDone()){
+            Thread.yield();
+        }
+
+    }
+
     public void save(Statement statement) {
         ResultSetFuture resultSetFuture = session.executeAsync(statement);
         while (!resultSetFuture.isDone()){
@@ -111,7 +129,9 @@ public abstract class BaseCassandraDao <T> {
     protected T findOne(Statement statement) {
         statement.setFetchSize(1);
         ResultSet result = session.execute(statement);
-
+        if(result.getAvailableWithoutFetching() <= 0) {
+            return null;
+        }
         return convertToInstance(result.one());
     }
 
@@ -119,7 +139,7 @@ public abstract class BaseCassandraDao <T> {
 
     protected T convertToInstance(Row row, PagingState pagingState) {
         T model = convertToInstance(row);
-        if (model instanceof ICassandraPaging) {
+        if (model instanceof ICassandraPaging && pagingState != null) {
            ((ICassandraPaging) model).setNextPage(pagingState.toString());
         }
         return model;

@@ -15,16 +15,6 @@
  */
 package com.comcast.cns.controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.apache.log4j.Logger;
-
 import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesResult;
 import com.amazonaws.services.sns.model.RemovePermissionRequest;
@@ -34,6 +24,15 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.CMBStatement;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.controller.CQSQueuePermissionsPage;
+import org.apache.log4j.Logger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Topic permissions admin page

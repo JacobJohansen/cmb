@@ -39,7 +39,7 @@ public class CQSManageServiceAction extends CQSAction {
 
 	private static Logger logger = Logger.getLogger(CQSPurgeQueueAction.class);
 	
-    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public static final String CQS_API_SERVERS = "cqs_api_servers";
     public CQSManageServiceAction() {
         super("ManageService");
     }
@@ -77,7 +77,7 @@ public class CQSManageServiceAction extends CQSAction {
 	    	return true;
 			
 		} else if (task.equals("RemoveRecord")) {
-			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("CQS", CQS_API_SERVERS).where(QueryBuilder.eq("host", host)));
+			DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.delete().all().from("cqs", CQS_API_SERVERS).where(QueryBuilder.eq("host", host)));
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

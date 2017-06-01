@@ -304,7 +304,7 @@ protected String httpPOST(String baseUrl, String urlString, AWSCredentials awsCr
 		String []parameterArray=parameterString.split("&");
 		Map <String, String> requestParameters=new HashMap<String, String>();
 		for(int i=0; i<parameterArray.length;i++){
-			requestParameters.put(parameterArray[i].substring(0,parameterArray[i].indexOf("=")), 
+			requestParameters.put(parameterArray[i].substring(0,parameterArray[i].indexOf("=")),
 					parameterArray[i].substring(parameterArray[i].indexOf("=")+1));
 		}
 		request.setParameters(requestParameters);

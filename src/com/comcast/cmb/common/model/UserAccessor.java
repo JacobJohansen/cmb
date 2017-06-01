@@ -24,22 +24,22 @@ public interface UserAccessor {
     ResultSetFuture saveUserIdByName(@Param("user")User user);
 
     @Query("delete from CMB.Users where userId = :userId")
-    ResultSetFuture delete(@Param("userId") UUID userId);
+    ResultSetFuture delete(@Param("user_id") UUID userId);
 
     @Query("delete from CMB.userIdsByAccessKey where accessKey = :accessKey")
-    ResultSetFuture deleteAccessKeyByById(@Param("accessKey") String accessKey);
+    ResultSetFuture deleteAccessKeyByById(@Param("access_key") String accessKey);
 
     @Query("delete from CMB.UserIdByName where userName = :userName")
-    ResultSetFuture deleteUserIdByName(@Param("userName")String userName);
+    ResultSetFuture deleteUserIdByName(@Param("user_name")String userName);
 
     @Query("select * from CMB.Users where userId = :userId")
-    User find(@Param("userId") UUID userId);
+    User find(@Param("user_id") UUID userId);
 
     @Query("select * from CMB.userIdsByAccessKey where accessKey = :accessKey")
-    User findAccessKeyByById(@Param("accessKey") String accessKey);
+    User findAccessKeyByById(@Param("access_key") String accessKey);
 
     @Query("select * from CMB.UserIdByName where userName = :userName")
-    User findUserIdByName(@Param("userName")String userName);
+    User findUserIdByName(@Param("user_name")String userName);
 
     @Query("select * from CMB.Users")
     Result<User> findAll();

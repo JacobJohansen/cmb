@@ -57,7 +57,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     
     private static Logger logger = Logger.getLogger(CNSControllerServlet.class);
     
-    private static final String CNS_API_SERVERS = "CNSAPIServers";
+    private static final String CNS_API_SERVERS = "cns_api_servers";
     /**
      * NodeName global constant is used to identify this process uniquely across all API servers
      * and is used to identify creators of recovery logs
@@ -197,12 +197,12 @@ public class CNSControllerServlet extends CMBControllerServlet {
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + serverIp + " port=" + serverPort);
 
 				DurablePersistenceFactory.getInstance().getSession().execute(
-					QueryBuilder.insertInto("CNS", CNS_API_SERVERS)
+					QueryBuilder.insertInto("cns", CNS_API_SERVERS)
 						.value("host", serverIp + ":" + serverPort)
 						.value("timestamp", now + "")
 						.value("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"))
-						.value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
-						.value("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl())
+						.value("data_center", CMBProperties.getInstance().getCMBDataCenter())
+						.value("service_url", CMBProperties.getInstance().getCNSServiceUrl())
 				);
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

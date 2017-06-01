@@ -15,15 +15,11 @@
  */
 package com.comcast.cmb.common.util;
 
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.log4j.Logger;
+import java.util.*;
 
 /**
  * Class represents all properties for CMB. Most of them are read from a properties file.
@@ -333,9 +329,9 @@ public class CMBProperties {
             maxVisibilityTO = Integer.parseInt(props.getProperty("cmb.cqs.maxVisibilityTO", "43200"));
             maxDelaySeconds=Integer.parseInt(props.getProperty("cmb.cqs.maxDelaySeconds", "900"));
             
-            cmbCommonKeyspace = props.getProperty("cmb.common.keyspace", "CMB");
-            cmbCQSKeyspace = props.getProperty("cmb.cqs.keyspace", "CQS");
-            cmbCNSKeyspace = props.getProperty("cmb.cns.keyspace", "CNS");
+            cmbCommonKeyspace = props.getProperty("cmb.common.keyspace", "cmb");
+            cmbCQSKeyspace = props.getProperty("cmb.cqs.keyspace", "cqs");
+            cmbCNSKeyspace = props.getProperty("cmb.cns.keyspace", "cns");
 
             userCacheExpiring = Integer.parseInt(props.getProperty("cmb.user.cacheExpiringInSeconds", "60"));
             userCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.user.cacheSizeLimit", "1000"));

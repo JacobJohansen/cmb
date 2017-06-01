@@ -30,11 +30,11 @@ import java.util.Set;
 
 public class CQSAPIStatWrapper {
 	
-	public static final String CNS_API_SERVERS = "CNSAPIServers";
-	public static final String CQS_API_SERVERS = "CQSAPIServers";
+	public static final String CNS_API_SERVERS = "cns_api_servers";
+	public static final String CQS_API_SERVERS = "cqs_api_servers";
 	
 	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
-		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CNS", CNS_API_SERVERS));
+		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("cns", CNS_API_SERVERS));
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 			
 		for (Row row : resultSet.all()) {
@@ -50,12 +50,12 @@ public class CQSAPIStatWrapper {
 				stats.setJmxPort(Long.parseLong(row.getString("jmxport")));
 			}
 
-			if (!row.isNull("dataCenter")) {
-				stats.setDataCenter(row.getString("dataCenter"));
+			if (!row.isNull("data_center")) {
+				stats.setDataCenter(row.getString("data_center"));
 			}
 
-			if (!row.isNull("serviceUrl")) {
-				stats.setServiceUrl(row.getString("serviceUrl"));
+			if (!row.isNull("service_url")) {
+				stats.setServiceUrl(row.getString("service_url"));
 			}
 
 			if (stats.getIpAddress().contains(":")) {
@@ -130,7 +130,7 @@ public class CQSAPIStatWrapper {
 	}
 	
 	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
-		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("CQS", CQS_API_SERVERS));
+		ResultSet resultSet = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from("cqs", CQS_API_SERVERS));
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 			
 		for (Row row : resultSet.all()) {
@@ -150,16 +150,16 @@ public class CQSAPIStatWrapper {
 				stats.setLongPollPort(Long.parseLong(row.getString("port")));
 			}
 
-			if (!row.isNull("dataCenter")) {
-				stats.setDataCenter(row.getString("dataCenter"));
+			if (!row.isNull("data_center")) {
+				stats.setDataCenter(row.getString("data_center"));
 			}
 
-			if (!row.isNull("serviceUrl")) {
-				stats.setServiceUrl(row.getString("serviceUrl"));
+			if (!row.isNull("service_url")) {
+				stats.setServiceUrl(row.getString("service_url"));
 			}
 
-			if (!row.isNull("redisServerList")) {
-				stats.setRedisServerList(row.getString("redisServerList"));
+			if (!row.isNull("redis_server_list")) {
+				stats.setRedisServerList(row.getString("redis_server_list"));
 			}
 
 			if (stats.getIpAddress().contains(":")) {

@@ -135,7 +135,7 @@ public class CNSAttributesCassandraPersistenceTest {
 		CNSThrottlePolicy throttlePolicy = new CNSThrottlePolicy();
 		throttlePolicy.setMaxReceivesPerSecond(2);
 		deliveryPolicy.setThrottlePolicy(throttlePolicy);
-		subscriptionAttributes.setDeliveryPolicy(deliveryPolicy);				
+		subscriptionAttributes.setDeliveryPolicy(deliveryPolicy);
 		
 		attributeHandler.setSubscriptionAttributes(subscriptionAttributes , subscription.getArn());
 		

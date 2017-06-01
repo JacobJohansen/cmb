@@ -209,12 +209,12 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
 	        	try {
                     DurablePersistenceFactory.getInstance().getSession().execute(
-                          QueryBuilder.insertInto("CNS", "CNSWorkers")
+                          QueryBuilder.insertInto("cns", "cns_workers")
                             .value("host", hostAddress)
-                            .value("consumerTimestamp", System.currentTimeMillis() + "")
+                            .value("consumer_timestamp", System.currentTimeMillis() + "")
                             .value("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"))
                             .value("mode", CNSPublisher.getModeString())
-                            .value("dataCenter", CMBProperties.getInstance().getCMBDataCenter())
+                            .value("data_center", CMBProperties.getInstance().getCMBDataCenter())
                     );
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);

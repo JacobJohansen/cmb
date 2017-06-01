@@ -18,7 +18,6 @@ package com.comcast.cmb.test.unit;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -43,7 +42,7 @@ public class UserPersistenceTest {
     public void setup() throws Exception {
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        PersistenceFactory.reset();
+//        PersistenceFactory.reset();
     }
 
 	@Test

@@ -215,15 +215,15 @@ public class CNSRetryPolicy {
 			error = true;
 		}
 
-		if (json.has("numMinDelayRetries")) {
+		if (json.has("numMinDelayRetries") && !json.isNull("numMinDelayRetries")) {
 			lnumMinDelayRetries  = json.getInt("numMinDelayRetries");
 		}
 
-		if (json.has("numMaxDelayRetries")) {
+		if (json.has("numMaxDelayRetries") && !json.isNull("numMaxDelayRetries")) {
 			lnumMaxDelayRetries  = json.getInt("numMaxDelayRetries");
 		}
 
-		if (json.has("numNoDelayRetries")) {
+		if (json.has("numNoDelayRetries") && !json.isNull("numNoDelayRetries")) {
 			lnumNoDelayRetries  = json.getInt("numNoDelayRetries");
 		}
 

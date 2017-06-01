@@ -45,8 +45,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
  */
 public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> implements ICQSQueuePersistence {
     
-	private static final String COLUMN_FAMILY_QUEUES = "CQSQueues";
-	private static final String COLUMN_FAMILY_QUEUES_BY_USER = "CQSQueuesByUserId";
+	private static final String COLUMN_FAMILY_QUEUES = "cqs_queues";
+	private static final String COLUMN_FAMILY_QUEUES_BY_USER = "cqs_queues_by_user_id";
 
 	public static final Logger logger = Logger.getLogger(CQSQueueCassandraPersistence.class);
 
@@ -54,6 +54,7 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 	private final PreparedStatement insertCQSQueuesByUserId;
 
 	private final PreparedStatement selectCQSQueues;
+	private final PreparedStatement selectCQSQueuesByUserIdAndArn;
 	private final PreparedStatement selectCQSQueuesByUserId;
 
 	private final PreparedStatement deleteCQSQueues;
@@ -63,56 +64,64 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 		super(DurablePersistenceFactory.getInstance().getSession());
 
 		insertCQSQueues = session.prepare(
-			QueryBuilder.insertInto("CQS", COLUMN_FAMILY_QUEUES)
-				.value("relativeUrl", bindMarker("relativeUrl"))
-				.value("queueArn", bindMarker("queueArn"))
+			QueryBuilder.insertInto("cqs", COLUMN_FAMILY_QUEUES)
+				.value("relative_url", bindMarker("relative_url"))
+				.value("queue_arn", bindMarker("queue_arn"))
 				.value("name", bindMarker("name"))
-				.value("ownerUserId", bindMarker("ownerUserId"))
+				.value("user_id", bindMarker("user_id"))
 				.value("region", bindMarker("region"))
-				.value("serviceEndpoint", bindMarker("serviceEndpoint"))
-				.value("visibilityTO", bindMarker("visibilityTO"))
-				.value("maxMsgSize", bindMarker("maxMsgSize"))
-				.value("msgRetentionPeriod", bindMarker("msgRetentionPeriod"))
-				.value("delaySeconds", bindMarker("delaySeconds"))
+				.value("service_endpoint", bindMarker("service_endpoint"))
+				.value("visibility_timeout", bindMarker("visibility_timeout"))
+				.value("max_message_size", bindMarker("max_message_size"))
+				.value("message_retention_period", bindMarker("message_retention_period"))
+				.value("delay_seconds", bindMarker("delay_seconds"))
 				.value("policy", bindMarker("policy"))
-				.value("createdTime", bindMarker("createdTime"))
-				.value("waitTime", bindMarker("waitTime"))
-				.value("numberOfPartitions", bindMarker("numberOfPartitions"))
-				.value("numberOfShards", bindMarker("numberOfShards"))
+				.value("created_time", bindMarker("created_time"))
+				.value("wait_time", bindMarker("wait_time"))
+				.value("number_of_partitions", bindMarker("number_of_partitions"))
+				.value("number_of_shards", bindMarker("number_of_shards"))
 				.value("compressed", bindMarker("compressed"))
-				.value("redrivePolicy", bindMarker("redrivePolicy"))
+				.value("redrive_policy", bindMarker("redrive_policy"))
 		);
 
 		insertCQSQueuesByUserId = session.prepare(
-			QueryBuilder.insertInto("CQS", COLUMN_FAMILY_QUEUES_BY_USER)
-				.value("userId", bindMarker("userId"))
-				.value("queueArn", bindMarker("queueArn"))
+			QueryBuilder.insertInto("cqs", COLUMN_FAMILY_QUEUES_BY_USER)
+				.value("user_id", bindMarker("user_id"))
+				.value("queue_arn", bindMarker("queue_arn"))
+				.value("created_time", bindMarker("created_time"))
 		);
 
 		selectCQSQueues = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CQS", COLUMN_FAMILY_QUEUES)
-				.where(eq("relativeUrl", bindMarker("relativeUrl")))
+				.from("cqs", COLUMN_FAMILY_QUEUES)
+				.where(eq("relative_url", bindMarker("relative_url")))
 		);
-		selectCQSQueuesByUserId = session.prepare(
+		selectCQSQueuesByUserIdAndArn = session.prepare(
 			QueryBuilder.select()
 				.all()
-				.from("CQS", COLUMN_FAMILY_QUEUES_BY_USER)
-				.where(eq("userId", bindMarker("userId")))
-				.and(eq("queueArn", bindMarker("queueArn")))
+				.from("cqs", COLUMN_FAMILY_QUEUES_BY_USER)
+				.where(eq("user_id", bindMarker("user_id")))
+				.and(eq("queue_arn", bindMarker("queue_arn")))
+		);
+
+		selectCQSQueuesByUserId = session.prepare(
+			QueryBuilder.select()
+						.all()
+						.from("cqs", COLUMN_FAMILY_QUEUES_BY_USER)
+						.where(eq("user_id", bindMarker("user_id")))
 		);
 
 		deleteCQSQueues = session.prepare(
 			QueryBuilder.delete()
-						.from("CQS", COLUMN_FAMILY_QUEUES)
-						.where(eq("relativeUrl", bindMarker("relativeUrl")))
+						.from("cqs", COLUMN_FAMILY_QUEUES)
+						.where(eq("relative_url", bindMarker("relative_url")))
 		);
 		deleteCQSQueuesByUserId = session.prepare(
 			QueryBuilder.delete()
-						.from("CQS", COLUMN_FAMILY_QUEUES_BY_USER)
-						.where(eq("userId", bindMarker("userId")))
-						.and(eq("queueArn", bindMarker("queueArn")))
+						.from("cqs", COLUMN_FAMILY_QUEUES_BY_USER)
+						.where(eq("user_id", bindMarker("user_id")))
+						.and(eq("queue_arn", bindMarker("queue_arn")))
 		);
 
 	}
@@ -124,65 +133,65 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 
 		save(Lists.newArrayList(
 			insertCQSQueues.bind()
-						   .setString("relativeUrl", queue.getRelativeUrl())
-						   .setString("queueArn", queue.getArn())
+						   .setString("relative_url", queue.getRelativeUrl())
+						   .setString("queue_arn", queue.getArn())
 						   .setString("name", queue.getName())
-						   .setString("userId", queue.getOwnerUserId())
+						   .setString("user_id", queue.getOwnerUserId())
 						   .setString("region", queue.getRegion())
-						   .setString("serviceEndpoint", queue.getServiceEndpoint())
-						   .setString("visibilityTO", Integer.toString(queue.getVisibilityTO()))
-						   .setString("maxMsgSize", Integer.toString(queue.getMaxMsgSize()))
-						   .setString("msgRetentionPeriod", Integer.toString(queue.getMsgRetentionPeriod()))
-						   .setString("delaySeconds", Integer.toString(queue.getDelaySeconds()))
+						   .setString("service_endpoint", queue.getServiceEndpoint())
+						   .setString("visibility_timeout", Integer.toString(queue.getVisibilityTO()))
+						   .setString("max_message_size", Integer.toString(queue.getMaxMsgSize()))
+						   .setString("message_retention_period", Integer.toString(queue.getMsgRetentionPeriod()))
+						   .setString("delay_seconds", Integer.toString(queue.getDelaySeconds()))
 						   .setString("policy", queue.getPolicy())
-						   .setString("createdTime", Long.toString(queue.getCreatedTime()))
-						   .setString("waitTime", Integer.toString(queue.getReceiveMessageWaitTimeSeconds()))
-						   .setString("numberOfPartitions", Integer.toString(queue.getNumberOfPartitions()))
-						   .setString("numberOfShards", Integer.toString(queue.getNumberOfShards()))
+						   .setString("created_time", Long.toString(queue.getCreatedTime()))
+						   .setString("wait_time", Integer.toString(queue.getReceiveMessageWaitTimeSeconds()))
+						   .setString("number_of_partitions", Integer.toString(queue.getNumberOfPartitions()))
+						   .setString("number_of_shards", Integer.toString(queue.getNumberOfShards()))
 						   .setString("compressed", Boolean.toString(queue.isCompressed()))
-						   .setString("redrivePolicy", queue.getRedrivePolicy()),
+						   .setString("redrive_policy", queue.getRedrivePolicy()),
 
 			insertCQSQueuesByUserId.bind()
-								   .setString("userId", queue.getOwnerUserId())
-								   .setString("queueArn", queue.getArn())
-								   .setString("createdTime", Long.toString(queue.getCreatedTime()))
+								   .setString("user_id", queue.getOwnerUserId())
+								   .setString("queue_arn", queue.getArn())
+								   .setString("created_time", Long.toString(queue.getCreatedTime()))
 		));
 	}
 	
 	@Override
 	public void updateQueueAttribute(String queueURL, Map<String, String> queueData) throws PersistenceException {
 		BoundStatement updateQueueAttributes = insertCQSQueues.bind();
-		updateQueueAttributes.setString("relativeUrl", queueURL);
+		updateQueueAttributes.setString("relative_url", queueURL);
 
-		if(queueData.containsKey("visibilityTO")) {
-			updateQueueAttributes.setString("visibilityTO", queueData.get("visibilityTO"));
+		if(queueData.containsKey("visibility_timeout")) {
+			updateQueueAttributes.setString("visibility_timeout", queueData.get("visibility_timeout"));
 		}
 		if(queueData.containsKey("policy")) {
 			updateQueueAttributes.setString("policy", queueData.get("policy"));
 		}
-		if(queueData.containsKey("maxMsgSize")) {
-			updateQueueAttributes.setString("maxMsgSize", queueData.get("maxMsgSize"));
+		if(queueData.containsKey("max_message_size")) {
+			updateQueueAttributes.setString("max_message_size", queueData.get("max_message_size"));
 		}
-		if(queueData.containsKey("msgRetentionPeriod")) {
-			updateQueueAttributes.setString("msgRetentionPeriod", queueData.get("msgRetentionPeriod"));
+		if(queueData.containsKey("message_retention_period")) {
+			updateQueueAttributes.setString("message_retention_period", queueData.get("message_retention_period"));
 		}
-		if(queueData.containsKey("delaySeconds")) {
-			updateQueueAttributes.setString("delaySeconds", queueData.get("delaySeconds"));
+		if(queueData.containsKey("delay_seconds")) {
+			updateQueueAttributes.setString("delay_seconds", queueData.get("delay_seconds"));
 		}
-		if(queueData.containsKey("waitTime")) {
-			updateQueueAttributes.setString("waitTime", queueData.get("waitTime"));
+		if(queueData.containsKey("wait_time")) {
+			updateQueueAttributes.setString("wait_time", queueData.get("wait_time"));
 		}
-		if(queueData.containsKey("numberOfPartitions")) {
-			updateQueueAttributes.setString("numberOfPartitions", queueData.get("numberOfPartitions"));
+		if(queueData.containsKey("number_of_partitions")) {
+			updateQueueAttributes.setString("number_of_partitions", queueData.get("number_of_partitions"));
 		}
-		if(queueData.containsKey("numberOfShards")) {
-			updateQueueAttributes.setString("numberOfShards", queueData.get("numberOfShards"));
+		if(queueData.containsKey("number_of_shards")) {
+			updateQueueAttributes.setString("number_of_shards", queueData.get("number_of_shards"));
 		}
 		if(queueData.containsKey("compressed")) {
 			updateQueueAttributes.setString("compressed", queueData.get("compressed"));
 		}
-		if(queueData.containsKey("redrivePolicy")) {
-			updateQueueAttributes.setString("redrivePolicy", queueData.get("redrivePolicy"));
+		if(queueData.containsKey("redrive_policy")) {
+			updateQueueAttributes.setString("redrive_policy", queueData.get("redrive_policy"));
 		}
 		save(updateQueueAttributes);
 	}
@@ -194,9 +203,9 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No queue with the url " + queueUrl + " exists");
 		}
 
-		save(Lists.newArrayList(
-			deleteCQSQueues.bind().setString("relativeUrl", queueUrl),
-			deleteCQSQueuesByUserId.bind().setString("userId", Util.getUserIdForRelativeQueueUrl(queueUrl)).setString("queueArn", Util.getArnForRelativeQueueUrl(queueUrl))
+		delete(Lists.newArrayList(
+			deleteCQSQueues.bind().setString("relative_url", queueUrl),
+			deleteCQSQueuesByUserId.bind().setString("user_id", Util.getUserIdForRelativeQueueUrl(queueUrl)).setString("queue_arn", Util.getArnForRelativeQueueUrl(queueUrl))
 		));
 	}
 
@@ -208,7 +217,7 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			
-		List<CQSQueue> queueList = findAll(selectCQSQueuesByUserId.bind().setString("userId", userId));
+		List<CQSQueue> queueList = findAll(selectCQSQueuesByUserId.bind().setString("user_id", userId));
 
 		Iterator<CQSQueue> queueIterator = queueList.iterator();
 
@@ -235,11 +244,11 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 	
 	@Override
 	public long getNumberOfQueuesByUser(String userId) throws PersistenceException {
-		return findAll(selectCQSQueuesByUserId.bind().setString("userId", userId)).size();
+		return findAll(selectCQSQueuesByUserId.bind().setString("user_id", userId)).size();
 	}
 
 	private CQSQueue getQueueByUrl(String queueUrl) throws PersistenceException {
-		return findOne(selectCQSQueues.bind().setString("relativeUrl", queueUrl));
+		return findOne(selectCQSQueues.bind().setString("relative_url", queueUrl));
 	}
 
 	@Override
@@ -260,7 +269,7 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 		}
 
 		save(insertCQSQueues.bind()
-							.setString("relativeUrl", queueUrl)
+							.setString("relative_url", queueUrl)
 							.setString("policy", policy)
 		);
 
@@ -271,13 +280,13 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 	protected CQSQueue convertToInstance(Row row) {
 		try {
 			String arn = "";
-			if (row.getColumnDefinitions().contains("queueArn")) {
-				arn = row.getString("queueArn");
+			if (row.getColumnDefinitions().contains("queue_arn")) {
+				arn = row.getString("queue_arn");
 			}
 
 			String relativeUrl;
-			if (row.getColumnDefinitions().contains("relativeUrl")) {
-				relativeUrl = row.getString("relativeUrl");
+			if (row.getColumnDefinitions().contains("relative_url")) {
+				relativeUrl = row.getString("relative_url");
 			} else {
 				relativeUrl = Util.getRelativeQueueUrlForArn(arn);
 			}
@@ -290,8 +299,8 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 			}
 
 			String ownerUserId = "";
-			if (row.getColumnDefinitions().contains("userId")) {
-				ownerUserId = row.getString("userId");
+			if (row.getColumnDefinitions().contains("user_id")) {
+				ownerUserId = row.getString("user_id");
 			}
 
 			String region = "";
@@ -300,19 +309,19 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 			}
 
 			int visibilityTO = 0;
-			if (row.getColumnDefinitions().contains("visibilityTO")) {
-				visibilityTO = (new Long(row.getString("visibilityTO"))).intValue();
+			if (row.getColumnDefinitions().contains("visibility_timeout")) {
+				visibilityTO = (new Long(row.getString("visibility_timeout"))).intValue();
 			}
 
 			int maxMsgSize = 0;
-			if (row.getColumnDefinitions().contains("maxMsgSize")) {
-				maxMsgSize = (new Long(row.getString("maxMsgSize"))).intValue();
+			if (row.getColumnDefinitions().contains("max_message_size")) {
+				maxMsgSize = (new Long(row.getString("max_message_size"))).intValue();
 			}
 
 
 			int msgRetentionPeriod = 0;
-			if (row.getColumnDefinitions().contains("msgRetentionPeriod")) {
-				msgRetentionPeriod = (new Long(row.getString("msgRetentionPeriod"))).intValue();
+			if (row.getColumnDefinitions().contains("message_retention_period")) {
+				msgRetentionPeriod = (new Long(row.getString("message_retention_period"))).intValue();
 			}
 
 			int delaySeconds = 0;
@@ -322,18 +331,18 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 
 
 			int waitTimeSeconds = 0;
-			if (row.getColumnDefinitions().contains("waitTime")) {
-				waitTimeSeconds = row.isNull("waitTime") ? 0 : (new Long(row.getString("waitTime"))).intValue();
+			if (row.getColumnDefinitions().contains("wait_time")) {
+				waitTimeSeconds = row.isNull("wait_time") ? 0 : (new Long(row.getString("wait_time"))).intValue();
 			}
 
 			int numPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
-			if (row.getColumnDefinitions().contains("numberOfPartitions")) {
-				numPartitions = row.isNull("numberOfPartitions") ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(row.getString("numberOfPartitions"))).intValue();
+			if (row.getColumnDefinitions().contains("number_of_partitions")) {
+				numPartitions = row.isNull("number_of_partitions") ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(row.getString("number_of_partitions"))).intValue();
 			}
 
 			int numShards =  1;
-			if (row.getColumnDefinitions().contains("numberOfShards")) {
-				numShards = row.isNull("numberOfShards") ? 1 : (new Long(row.getString("numberOfShards"))).intValue();
+			if (row.getColumnDefinitions().contains("number_of_shards")) {
+				numShards = row.isNull("number_of_shards") ? 1 : (new Long(row.getString("number_of_shards"))).intValue();
 			}
 
 			String policy = "";
@@ -342,23 +351,23 @@ public class CQSQueueCassandraPersistence extends BaseCassandraDao<CQSQueue> imp
 			}
 
 			long createdTime = 0;
-			if (row.getColumnDefinitions().contains("createdTime")) {
-				createdTime = (new Long(row.getString("createdTime")));
+			if (row.getColumnDefinitions().contains("created_time")) {
+				createdTime = (new Long(row.getString("created_time")));
 			}
 
 			String hostName = "";
-			if (row.getColumnDefinitions().contains("serviceEndpoint")) {
-				hostName = row.getString("serviceEndpoint");
+			if (row.getColumnDefinitions().contains("service_endpoint")) {
+				hostName = row.getString("service_endpoint");
 			}
 
 			boolean isCompressed = false;
-			if (row.getColumnDefinitions().contains("serviceEndpoint")) {
+			if (row.getColumnDefinitions().contains("service_endpoint")) {
 				isCompressed = !row.isNull("compressed") && Boolean.getBoolean(row.getString("compressed"));
 			}
 
 			String redrivePolicy = "";
-			if (row.getColumnDefinitions().contains("redrivePolicy")) {
-				hostName = row.isNull("redrivePolicy")? "" : row.getString("redrivePolicy");
+			if (row.getColumnDefinitions().contains("redrive_policy")) {
+				hostName = row.isNull("redrive_policy")? "" : row.getString("redrive_policy");
 			}
 
 			CQSQueue queue = new CQSQueue(name, ownerUserId);

@@ -52,8 +52,8 @@ public class CQSTestUtils {
 		long messageCount = 0;
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-//			long partitionCount = DurablePersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
-			long partitionCount = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages").where(QueryBuilder.eq("queueShardPartition", queueKey))).all().size();
+//			long partitionCount = DurablePersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "cqs_partitioned_queue_messages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+			long partitionCount = DurablePersistenceFactory.getInstance().getSession().execute(QueryBuilder.select().all().from(CMBProperties.getInstance().getCQSKeyspace(), "cqs_partitioned_queue_messages").where(QueryBuilder.eq("queue_shard_partition", queueKey))).all().size();
 			messageCount += partitionCount;
 			System.out.println("# of messages in " + queueKey + " =" + partitionCount);
 		}

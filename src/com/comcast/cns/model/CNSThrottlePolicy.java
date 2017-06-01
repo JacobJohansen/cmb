@@ -80,7 +80,7 @@ public class CNSThrottlePolicy {
 		
 		try {
 			
-			if (json.has("maxReceivesPerSecond")  && (json.get("maxReceivesPerSecond") != JSONObject.NULL)) {
+			if (json.has("maxReceivesPerSecond")  && !json.isNull("maxReceivesPerSecond")) {
 				maxReceivesPerSecond = json.getInt("maxReceivesPerSecond");
 			} else if (json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
 				error = true;

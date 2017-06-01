@@ -47,8 +47,12 @@ public class UserAuthModuleTest {
         Util.initLog4jTest();
 
         IUserPersistence userHandler = new UserCassandraPersistence();
-        
-        User user = userHandler.getUserByName("cmb_unit_test");
+        User user = null;
+        try {
+            user = userHandler.getUserByName("cmb_unit_test");
+        } catch (Exception e) {
+
+        }
 
         if (user == null) {
             user = userHandler.createUser("cmb_unit_test", "cmb_unit_test");

@@ -36,10 +36,10 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);
 	private static final CassandraDataStaxPersistence cassandraDataStaxPersistence = DurablePersistenceFactory.getInstance();
 
-	private final String CMB_KEYSPACE = "CMB";
-	private final String USER_BY_ID = "Users";
-	private final String USERID_BY_ACCESSKEY = "userIdsByAccessKey";
-	private final String USERID_BY_NAME = "UserIdByName";
+	private final String CMB_KEYSPACE = "cmb";
+	private final String USER_BY_ID = "users";
+	private final String USERID_BY_ACCESSKEY = "user_ids_by_access_key";
+	private final String USERID_BY_NAME = "user_id_by_name";
 
 
 	private final PreparedStatement saveUser;
@@ -62,60 +62,59 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 		saveUser = session.prepare(
 			QueryBuilder.insertInto(CMB_KEYSPACE, USER_BY_ID)
-						.value("userId", bindMarker("userId"))
-						.value("userName", bindMarker("userName"))
-						.value("hashedPassword", bindMarker("hashedPassword"))
-						.value("accessKey", bindMarker("accessKey"))
-						.value("accessSecret", bindMarker("accessSecret"))
-						.value("isAdmin", bindMarker("isAdmin"))
+						.value("user_id", bindMarker("user_id"))
+						.value("user_name", bindMarker("user_name"))
+						.value("hash_password", bindMarker("hash_password"))
+						.value("access_key", bindMarker("access_key"))
+						.value("access_secret", bindMarker("access_secret"))
+						.value("is_admin", bindMarker("is_admin"))
 						.value("description", bindMarker("description"))
 		);
 
 		saveUserByAccessKey = session.prepare(
 			QueryBuilder.insertInto(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
-						.value("userId", bindMarker("userId"))
-						.value("accessKey", bindMarker("accessKey"))
-						.value("accessSecret", bindMarker("accessSecret"))
+						.value("user_id", bindMarker("user_id"))
+						.value("access_key", bindMarker("access_key"))
+						.value("access_secret", bindMarker("access_secret"))
 		);
 
 		saveUserByName = session.prepare(
 			QueryBuilder.insertInto(CMB_KEYSPACE, USERID_BY_NAME)
-						.value("userId", bindMarker("userId"))
-						.value("userName", bindMarker("userName"))
-						.value("hashedPassword", bindMarker("hashedPassword"))
+						.value("user_id", bindMarker("user_id"))
+						.value("user_name", bindMarker("user_name"))
+						.value("hash_password", bindMarker("hash_password"))
 		);
 
 		deleteUserById = session.prepare(
 			QueryBuilder.delete()
 						.from(CMB_KEYSPACE, USER_BY_ID)
-						.where(eq("userId", bindMarker("userId")))
+						.where(eq("user_id", bindMarker("user_id")))
 		);
 
 		deleteUserByName = session.prepare(
 			QueryBuilder.delete()
 						.from(CMB_KEYSPACE, USERID_BY_NAME)
-						.where(eq("userName", bindMarker("userName")))
+						.where(eq("user_name", bindMarker("user_name")))
 		);
 
 		deleteUserByAccessKey = session.prepare(
 			QueryBuilder.delete()
 						.from(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
-						.where(eq("accessKey", bindMarker("accessKey")))
+						.where(eq("access_key", bindMarker("access_key")))
 		);
 
 		findUserById = session.prepare(
 			QueryBuilder.select()
 						.all()
 						.from(CMB_KEYSPACE, USER_BY_ID)
-						.where(eq("userId", bindMarker("userId")))
-						.limit(1)
+						.where(eq("user_id", bindMarker("user_id")))
 		);
 
 		findUserByAccessKey = session.prepare(
 			QueryBuilder.select()
 						.all()
 						.from(CMB_KEYSPACE, USERID_BY_ACCESSKEY)
-						.where(eq("accessKey", bindMarker("accessKey")))
+						.where(eq("access_key", bindMarker("access_key")))
 						.limit(1)
 		);
 
@@ -123,7 +122,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 			QueryBuilder.select()
 						.all()
 						.from(CMB_KEYSPACE, USERID_BY_NAME)
-						.where(eq("userName", bindMarker("userName")))
+						.where(eq("user_name", bindMarker("user_name")))
 						.limit(1)
 		);
 
@@ -148,7 +147,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 	public User createUser(String userName, String password, Boolean isAdmin, String description) throws PersistenceException {
 		User user = null;
-		String hashedPassword = null;
+		String hash_password = null;
 		String accessSecret = null;
 		String accessKey = null;
 
@@ -162,14 +161,21 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "Invalid password");
 		}
 
-		if (getUserByName(userName) != null) {
+		User tempUser = null;
+		try {
+			tempUser = 	getUserByName(userName);
+		} catch (Exception e) {
+
+		}
+
+		if (tempUser != null) {
 			logger.error("event=create_user error_code=user_already_exists user_name=" + userName);
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "User with user name " + userName + " already exists");
 		}
 		String userId = Long.toString(System.currentTimeMillis()).substring(1);
 
 		try {
-			hashedPassword = AuthUtil.hashPassword(password);
+			hash_password = AuthUtil.hashPassword(password);
 			accessSecret = AuthUtil.generateRandomAccessSecret();
 			accessKey = AuthUtil.generateRandomAccessKey();
 		} catch (Exception e) {
@@ -177,7 +183,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, e.getMessage());
 		}
 
-		user = new User(userId, userName, hashedPassword, accessKey, accessSecret, isAdmin, description);
+		user = new User(userId, userName, hash_password, accessKey, accessSecret, isAdmin, description);
 
 		saveUser(user);
 		return user;
@@ -190,27 +196,27 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 	private BoundStatement upsertUser(User user) {
 		return saveUser.bind()
-					   .setString("userId", user.getUserId())
-					   .setString("userName", user.getUserName())
-					   .setString("hashedPassword", user.getHashedPassword())
-					   .setString("accessKey", user.getAccessKey())
-					   .setString("accessSecret", user.getAccessSecret())
-					   .setBool("isAdmin", user.getAdmin())
+					   .setString("user_id", user.getUserId())
+					   .setString("user_name", user.getUserName())
+					   .setString("hash_password", user.getHashedPassword())
+					   .setString("access_key", user.getAccessKey())
+					   .setString("access_secret", user.getAccessSecret())
+					   .setString("is_admin", Boolean.toString(user.getAdmin()))
 					   .setString("description", user.getDescription());
 	}
 
 	private BoundStatement upsertAcessKeyByUserId(User user) {
 		return saveUserByAccessKey.bind()
-						 		  .setString("accessKey", user.getAccessKey())
-								  .setString("accessSecret", user.getAccessSecret())
-								  .setString("userId", user.getUserId());
+						 		  .setString("access_key", user.getAccessKey())
+								  .setString("access_secret", user.getAccessSecret())
+								  .setString("user_id", user.getUserId());
 	}
 
 	private BoundStatement upsertUserIdByName(User user) {
 		return saveUserByName.bind()
-							 .setString("userName", user.getUserName())
-							 .setString("hashedPassword", user.getHashedPassword())
-							 .setString("userId", user.getUserId());
+							 .setString("user_name", user.getUserName())
+							 .setString("hash_password", user.getHashedPassword())
+							 .setString("user_id", user.getUserId());
 	}
 
 	public void deleteUser(String userName) {
@@ -220,17 +226,17 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 
 	private BoundStatement deleteUserIdByName(User user) {
 		return deleteUserByName.bind()
-								.setString("userName", user.getUserName());
+								.setString("user_name", user.getUserName());
 	}
 
 	private BoundStatement deleteUserById(User user) {
 		return deleteUserById.bind()
-							 .setString("userId", user.getUserId());
+							 .setString("user_id", user.getUserId());
 	}
 
 	private BoundStatement deleteUserByAccessKey(User user) {
 		return deleteUserByAccessKey.bind()
-									.setString("accessKey", user.getAccessKey());
+									.setString("access_key", user.getAccessKey());
 	}
 
 	public long getNumUserQueues(String userId) throws PersistenceException {
@@ -242,7 +248,7 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 	}
 
 	public User getUserById(String userId) {
-		User user = findOne(findUserById.bind().setString("userId", userId));
+		User user = findOne(findUserById.bind().setString("user_id", userId));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -250,23 +256,20 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 	}
 
 	public User getUserByName(String userName) {
-		User user = findOne(findUserByName.bind().setString("userName", userName));
+		User user = findOne(findUserByName.bind().setString("user_name", userName));
 		if(user == null) {
-			throw new RuntimeException("User Does not exist");
+			return null;
 		}
-		user = findOne(findUserById.bind().setString("userId", user.getUserId()));
-		if(user == null) {
-			throw new RuntimeException("User Does not exist");
-		}
+		user = findOne(findUserById.bind().setString("user_id", user.getUserId()));
 		return user;
 	}
 
 	public User getUserByAccessKey(String accessKey) {
-		User user = findOne(findUserByAccessKey.bind().setString("accessKey", accessKey));
+		User user = findOne(findUserByAccessKey.bind().setString("access_key", accessKey));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
-		user = findOne(findUserById.bind().setString("userId", user.getUserId()));
+		user = findOne(findUserById.bind().setString("user_id", user.getUserId()));
 		if(user == null) {
 			throw new RuntimeException("User Does not exist");
 		}
@@ -283,40 +286,40 @@ public class UserCassandraPersistence extends BaseCassandraDao<User> implements 
 	}
 
 	@Override protected User convertToInstance(Row row) {
-		String userId = row.getString("userId");
+		String userId = row.getString("user_id");
 		String userName = null;
-		String hashedPassword = null;
+		String hashPassword = null;
 		String accessKey = null;
 		String accessSecret = null;
 		Boolean isAdmin = null;
 		String description = null;
 
 
-		if(row.getColumnDefinitions().contains("userName")) {
-			userName = row.getString("userName");
+		if(row.getColumnDefinitions().contains("user_name")) {
+			userName = row.getString("user_name");
 		}
 
-		if(row.getColumnDefinitions().contains("hashedPassword")) {
-			hashedPassword = row.getString("hashedPassword");
+		if(row.getColumnDefinitions().contains("hash_password")) {
+			hashPassword = row.getString("hash_password");
 		}
 
-		if(row.getColumnDefinitions().contains("accessKey")) {
-			accessKey = row.getString("accessKey");
+		if(row.getColumnDefinitions().contains("access_key")) {
+			accessKey = row.getString("access_key");
 		}
 
-		if(row.getColumnDefinitions().contains("accessSecret")) {
-			accessSecret = row.getString("accessSecret");
+		if(row.getColumnDefinitions().contains("access_secret")) {
+			accessSecret = row.getString("access_secret");
 		}
 
-		if(row.getColumnDefinitions().contains("isAdmin")) {
-			isAdmin = row.getBool("isAdmin");
+		if(row.getColumnDefinitions().contains("is_admin")) {
+			isAdmin = Boolean.parseBoolean(row.getString("is_admin"));
 		}
 
 		if(row.getColumnDefinitions().contains("description")) {
 			description = row.getString("description");
 		}
 
-		return new User(userId, userName, hashedPassword, accessKey, accessSecret, isAdmin, description);
+		return new User(userId, userName, hashPassword, accessKey, accessSecret, isAdmin, description);
 	}
 }
 

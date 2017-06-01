@@ -1,20 +1,26 @@
 package com.comcast.cns.persistence;
 
-import com.comcast.cmb.common.persistence.*;
+import com.comcast.cmb.common.persistence.BaseCassandraDao;
+import com.comcast.cmb.common.persistence.CassandraDataStaxPersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cns.controller.CNSCache;
+import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.model.CNSTopicDeliveryPolicy;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNSTopicAttributes> implements ICNSTopicAttributesPersistence {
-    private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
-    private static final String columnFamilyTopicStats = "CNSTopicStats";
+    private static final String columnFamilyTopicAttributes = "cns_topic_attributes";
+    private static final String columnFamilyTopicStats = "cns_topic_stats";
     private static Logger logger = Logger.getLogger(CNSSubscriptionAttributesCassandraPersistence.class);
     private static final CassandraDataStaxPersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 
@@ -39,58 +45,56 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
         super(cassandraHandler.getSession());
 
         saveTopicAttribute = session.prepare(
-              QueryBuilder.insertInto("CNS", columnFamilyTopicAttributes)
-                            .value("topicArn", bindMarker("topicArn"))
-                            .value("effectiveDeliveryPolicy", bindMarker("effectiveDeliveryPolicy"))
+              QueryBuilder.insertInto("cns", columnFamilyTopicAttributes)
+                            .value("topic_arn", bindMarker("topic_arn"))
+                            .value("effective_delivery_policy", bindMarker("effective_delivery_policy"))
                             .value("policy", bindMarker("policy"))
-                            .value("userId", bindMarker("userId"))
+                            .value("user_id", bindMarker("user_id"))
         );
 
         findTopicAttribute = session.prepare(
               QueryBuilder.select()
                           .all()
-                          .from("CNS", columnFamilyTopicAttributes)
-                          .where(eq("topicArn", bindMarker("topicArn")))
+                          .from("cns", columnFamilyTopicAttributes)
+                          .where(eq("topic_arn", bindMarker("topic_arn")))
         );
 
         removeTopicAttribute = session.prepare(
               QueryBuilder.delete()
-                          .from("CNS", columnFamilyTopicAttributes)
-                          .where(eq("topicArn", bindMarker("topicArn")))
+                          .from("cns", columnFamilyTopicAttributes)
+                          .where(eq("topic_arn", bindMarker("topic_arn")))
         );
 
         findStatusCount = session.prepare(
               QueryBuilder.select().column("value")
-                          .from("CNS", columnFamilyTopicStats)
-                          .where(eq("topicArn", bindMarker("topicArn")))
+                          .from("cns", columnFamilyTopicStats)
+                          .where(eq("topic_arn", bindMarker("topic_arn")))
                           .and(eq("status", bindMarker("status")))
                           .limit(1)
         );
 
         incrementCounter = session.prepare(
-              QueryBuilder.update("CNS", columnFamilyTopicStats)
-                          .where(eq("topicArn", bindMarker("topicArn")))
+              QueryBuilder.update("cns", columnFamilyTopicStats)
+                          .where(eq("topic_arn", bindMarker("topic_arn")))
                           .and(eq("status", bindMarker("status")))
                           .with(incr("value", bindMarker("count")))
         );
 
         decrementCounter = session.prepare(
-              QueryBuilder.update("CNS", columnFamilyTopicStats)
-                          .where(eq("topicArn", bindMarker("topicArn")))
+              QueryBuilder.update("cns", columnFamilyTopicStats)
+                          .where(eq("topic_arn", bindMarker("topic_arn")))
                           .and(eq("status", bindMarker("status")))
                           .with(decr("value", bindMarker("count")))
         );
     }
 
     public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
-
-        save(Lists.newArrayList(saveTopicAttribute.bind()
-                                                  .setString("userId",topicAttributes.getUserId())
-                                                  .setString("topicArn", topicArn)
-                                                  .setString("effectiveDeliveryPolicy", topicAttributes.getEffectiveDeliveryPolicy().toJSON().toString())
-                                                  .setString("policy", topicAttributes.getPolicy())
-
-        ));
+        BoundStatement saveStatement = saveTopicAttribute.bind()
+                                                         .setString("user_id",topicAttributes.getUserId())
+                                                         .setString("topic_arn", topicArn)
+                                                         .setString("effective_delivery_policy", topicAttributes.getDeliveryPolicy().toJSON().toString())
+                                                         .setString("policy", topicAttributes.getPolicy());
+        save(Lists.newArrayList(saveStatement));
 
         if (topicAttributes.getDisplayName() != null) {
             PersistenceFactory.getTopicPersistence().updateTopicDisplayName(topicArn, topicAttributes.getDisplayName());
@@ -101,37 +105,45 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
 
     public CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception {
 
-        CNSTopicAttributes topicAttributes = findOne(findTopicAttribute.bind().setString("topicArn", topicArn));
+        CNSTopicAttributes topicAttributes = findOne(findTopicAttribute.bind().setString("topic_arn", topicArn));
 
-        if (topicAttributes != null) {
+        if (topicAttributes == null) {
             return null;
         }
-        topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
-        long subscriptionConfirmedCount = session.execute(findStatusCount.bind().setString("topicArn", topicArn).setString("status", "subscriptionConfirmed")).one().getLong("value");
+
+        CNSTopic topic = PersistenceFactory.getTopicPersistence().getTopic(topicArn);
+        if(topic != null) {
+            topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
+        }
+        long subscriptionConfirmedCount = getTopicStats(topicArn, "subscriptionConfirmed");
         topicAttributes.setSubscriptionsConfirmed(subscriptionConfirmedCount);
-        long subscriptionPendingCount = session.execute(findStatusCount.bind().setString("topicArn", topicArn).setString("status", "subscriptionPending")).one().getLong("value");
+        long subscriptionPendingCount = getTopicStats(topicArn, "subscriptionPending");
         topicAttributes.setSubscriptionsPending(subscriptionPendingCount);
-        long subscriptionDeletedCount = session.execute(findStatusCount.bind().setString("topicArn", topicArn).setString("status", "subscriptionDeleted")).one().getLong("value");
+        long subscriptionDeletedCount = getTopicStats(topicArn, "subscriptionDeleted");
         topicAttributes.setSubscriptionsDeleted(subscriptionDeletedCount);
         return topicAttributes;
     }
 
     @Override
     public void removeTopicAttributes(String topicArn) {
-        save(removeTopicAttribute.bind().setString("topicArn",topicArn));
+        delete(removeTopicAttribute.bind().setString("topic_arn",topicArn));
     }
 
     public long getTopicStats(String topicArn, String status) {
-        return session.execute(findStatusCount.bind()
-                                              .setString("topicArn", topicArn)
-                                              .setString("status", status))
-                      .one()
-                      .getLong("value");
+
+
+              Row resultSet = session.execute(findStatusCount.bind()
+                                                       .setString("topic_arn", topicArn)
+                                                       .setString("status", status)).one();
+              if(resultSet != null && !resultSet.isNull("value")) {
+                  return  resultSet.getLong("value");
+              }
+              return 0;
     }
 
     @Override
     protected CNSTopicAttributes convertToInstance(Row row) {
-        CNSTopicAttributes cnsTopicAttributes = new CNSTopicAttributes(row.getString("topicArn"), row.getString("userId"));
+        CNSTopicAttributes cnsTopicAttributes = new CNSTopicAttributes(row.getString("topic_arn"), row.getString("user_id"));
 
         if(row.getColumnDefinitions().contains("policy")) {
             cnsTopicAttributes.setPolicy(row.getString("policy"));
@@ -139,16 +151,16 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
 
         try {
             CNSTopicDeliveryPolicy deliveryPolicy;
+            if (row.getColumnDefinitions().contains("effective_delivery_policy") && !row.isNull("effective_delivery_policy")) {
 
-            if (row.getColumnDefinitions().contains("effectiveDeliveryPolicy") && !row.isNull("effectiveDeliveryPolicy")) {
-                deliveryPolicy = new CNSTopicDeliveryPolicy(new JSONObject(row.getString("effectiveDeliveryPolicy")));
+                deliveryPolicy = new CNSTopicDeliveryPolicy(new JSONObject(row.getString("effective_delivery_policy")));
             } else {
                 deliveryPolicy = new CNSTopicDeliveryPolicy();
             }
             cnsTopicAttributes.setEffectiveDeliveryPolicy(deliveryPolicy);
             cnsTopicAttributes.setDeliveryPolicy(deliveryPolicy);
         } catch (Exception e) {
-            logger.error("failed to parse effective delivery policy: " + e.toString());
+
         }
 
         return cnsTopicAttributes;
@@ -161,9 +173,9 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
     public void incrementCounter(String topicArn, String status, int count) {
         save(Lists.newArrayList(
               incrementCounter.bind()
-                              .setString("topicArn", topicArn)
+                              .setString("topic_arn", topicArn)
                               .setString("status", status)
-                              .setInt("count", count)
+                              .setLong("count", count)
         ));
     }
 
@@ -174,9 +186,9 @@ public class CNSTopicAttributesCassandraPersistence extends BaseCassandraDao<CNS
     public void decrementCounter(String topicArn, String status, int count) {
         save(Lists.newArrayList(
               decrementCounter.bind()
-                              .setString("topicArn", topicArn)
+                              .setString("topic_arn", topicArn)
                               .setString("status", status)
-                              .setInt("count", count)
+                              .setLong("count", count)
         ));
     }
 }

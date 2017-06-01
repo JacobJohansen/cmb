@@ -15,19 +15,17 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.List;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cns.io.CNSTopicPopulator;
 import com.comcast.cns.model.CNSTopic;
+import org.apache.log4j.Logger;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * List topics
@@ -67,7 +65,7 @@ public class CNSListTopicsAction extends CNSAction {
 
 		if (topics.size() >= 100) {
 			
-			nextToken = topics.get(99).getArn();
+			nextToken = topics.get(99).getNextPage();
 			List<CNSTopic> nextTopics = PersistenceFactory.getTopicPersistence().listTopics(userId, nextToken);
 			
 			if (nextTopics.size() == 0) {

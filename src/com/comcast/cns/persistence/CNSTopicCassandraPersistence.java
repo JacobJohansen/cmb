@@ -49,8 +49,8 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 
 	private static Logger logger = Logger.getLogger(CNSTopicCassandraPersistence.class);
 
-	private static final String columnFamilyTopics = "CNSTopics";
-	private static final String columnFamilyTopicsByUserId = "CNSTopicsByUserId";
+	private static final String columnFamilyTopics = "cns_topics";
+	private static final String columnFamilyTopicsByUserId = "cns_topics_by_user_id";
 
 
 	PreparedStatement insertCNSTopics;
@@ -66,38 +66,38 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 		super(DurablePersistenceFactory.getInstance().getSession());
 
 		insertCNSTopics = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilyTopics)
-				.value("topicArn", bindMarker("topicArn"))
-				.value("displayName", bindMarker("displayName"))
+			QueryBuilder.insertInto("cns", columnFamilyTopics)
+				.value("topic_arn", bindMarker("topic_arn"))
+				.value("display_name", bindMarker("display_name"))
 				.value("name", bindMarker("name"))
-				.value("userId", bindMarker("userId"))
+				.value("user_id", bindMarker("user_id"))
 		);
 
 		insertCNSTopicsByUserId = session.prepare(
-			QueryBuilder.insertInto("CNS", columnFamilyTopicsByUserId)
-						.value("topicArn", bindMarker("topicArn"))
-						.value("userId", bindMarker("userId"))
+			QueryBuilder.insertInto("cns", columnFamilyTopicsByUserId)
+						.value("topic_arn", bindMarker("topic_arn"))
+						.value("user_id", bindMarker("user_id"))
 		);
 
 
 		selectCNSTopics = session.prepare(
-			QueryBuilder.select().all().from("CNS", columnFamilyTopics)
-				.where(eq("topicArn", bindMarker("topicArn")))
+			QueryBuilder.select().all().from("cns", columnFamilyTopics)
+				.where(eq("topic_arn", bindMarker("topic_arn")))
 		);
 
 		selectCNSTopicsByUserId = session.prepare(
-			QueryBuilder.select().all().from("CNS", columnFamilyTopicsByUserId)
-				.where(eq("userId", bindMarker("userId")))
+			QueryBuilder.select().from("cns", columnFamilyTopicsByUserId)
+				.where(eq("user_id", bindMarker("user_id")))
 		);
 
 		deleteCNSTopics = session.prepare(
-			QueryBuilder.delete().from("CNS", columnFamilyTopics)
-						.where(eq("topicArn", bindMarker("topicArn")))
+			QueryBuilder.delete().from("cns", columnFamilyTopics)
+						.where(eq("topic_arn", bindMarker("topic_arn")))
 		);
 
 		deleteCNSTopicsByUserId = session.prepare(
-			QueryBuilder.delete().from("CNS", columnFamilyTopicsByUserId)
-						.where(eq("userId", bindMarker("userId")))
+			QueryBuilder.delete().from("cns", columnFamilyTopicsByUserId)
+						.where(eq("user_id", bindMarker("user_id")))
 		);
 
 	}
@@ -116,8 +116,8 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 		topic.checkIsValid();
 
 		save(Lists.newArrayList(
-			insertCNSTopics.bind().setString("userId", topic.getUserId()).setString("topicArn", topic.getArn()).setString("displayName", topic.getDisplayName()).setString("name", topic.getName()),
-			insertCNSTopicsByUserId.bind().setString("userId", topic.getUserId()).setString("topicArn", topic.getArn())
+			insertCNSTopics.bind().setString("user_id", topic.getUserId()).setString("topic_arn", topic.getArn()).setString("display_name", topic.getDisplayName()).setString("name", topic.getName()),
+			insertCNSTopicsByUserId.bind().setString("user_id", topic.getUserId()).setString("topic_arn", topic.getArn())
 		));
 
 		// note: deleteing rows or columns makes them permanently unavailable as counters!
@@ -154,9 +154,9 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 
 		// delete all subscriptions first
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
-		save(Lists.newArrayList(
-			deleteCNSTopics.bind().setString("topicArn", arn),
-			deleteCNSTopicsByUserId.bind().setString("userId", topic.getUserId())
+		delete(Lists.newArrayList(
+			deleteCNSTopics.bind().setString("topic_arn", arn),
+			deleteCNSTopicsByUserId.bind().setString("user_id", topic.getUserId())
 		));
 		PersistenceFactory.getCNSTopicAttributePersistence().removeTopicAttributes(arn);
 		
@@ -170,14 +170,14 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			
-		return findAll(selectCNSTopicsByUserId.bind().setString("userId", userId)).size();
+		return findAll(selectCNSTopicsByUserId.bind().setString("user_id", userId)).size();
 	}
 
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception {
-
+		//TODO: Fix Paging
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-		List<CNSTopic> userTopics = find(selectCNSTopicsByUserId.bind().setString("userId", userId), nextToken, 100);
+		List<CNSTopic> userTopics = find(selectCNSTopicsByUserId.bind().setString("user_id", userId), nextToken, 100);
 
 		if (userTopics == null) {
 			return topics;
@@ -190,7 +190,7 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 				topics.add(topic);
 
 			} else {
-				save(deleteCNSTopicsByUserId.bind().setString("userId", userTopic.getUserId()).setString("topicArn", userTopic.getArn()));
+				save(deleteCNSTopicsByUserId.bind().setString("user_id", userTopic.getUserId()).setString("topic_arn", userTopic.getArn()));
 			}
 		}
 
@@ -198,7 +198,7 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 	}
 
 	public CNSTopic getTopic(String arn) throws Exception {
-		return findOne(selectCNSTopics.bind().setString("topicArn", arn));
+		return findOne(selectCNSTopics.bind().setString("topic_arn", arn));
 	}
 
 	public void updateTopicDisplayName(String arn, String displayName) throws Exception {
@@ -208,7 +208,7 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 		if (topic != null) {
 			topic.setDisplayName(displayName);
 			topic.checkIsValid();
-			save(insertCNSTopics.bind().setString("topicArn", arn).setString("displayName", topic.getDisplayName()));
+			save(insertCNSTopics.bind().setString("topic_arn", arn).setString("display_name", topic.getDisplayName()));
 		}
 		
 		CNSCache.removeTopic(arn);
@@ -221,17 +221,17 @@ public class CNSTopicCassandraPersistence extends BaseCassandraDao<CNSTopic> imp
 		String name = null;
 		String userId = null;
 
-		if (row.getColumnDefinitions().contains("topicArn")) {
-			topicArn = row.getString("topicArn");
+		if (row.getColumnDefinitions().contains("topic_arn")) {
+			topicArn = row.getString("topic_arn");
 		}
-		if (row.getColumnDefinitions().contains("displayName")) {
-			displayName = row.getString("displayName");
+		if (row.getColumnDefinitions().contains("display_name")) {
+			displayName = row.getString("display_name");
 		}
 		if (row.getColumnDefinitions().contains("name")) {
 			name = row.getString("name");
 		}
-		if (row.getColumnDefinitions().contains("userId")) {
-			userId = row.getString("userId");
+		if (row.getColumnDefinitions().contains("user_id")) {
+			userId = row.getString("user_id");
 		}
 
 		return new CNSTopic(topicArn, name, displayName, userId);

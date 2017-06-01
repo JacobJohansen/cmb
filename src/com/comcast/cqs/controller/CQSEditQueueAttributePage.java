@@ -66,10 +66,10 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 				String visibilityTimeout = request.getParameter("visibilityTimeout");
 				String maximumMessageSize = request.getParameter("maximumMessageSize");
 				String messageRetentionPeriod = request.getParameter("messageRetentionPeriod");
-				String delaySeconds = request.getParameter("delaySeconds");
+				String delaySeconds = request.getParameter("delay_seconds");
 				String receiveMessageWaitTimeSeconds = request.getParameter("receiveMessageWaitTimeSeconds");
-				String numberOfPartitions = request.getParameter("numberOfPartitions");
-				String numberOfShards = request.getParameter("numberOfShards");
+				String numberOfPartitions = request.getParameter("number_of_partitions");
+				String numberOfShards = request.getParameter("number_of_shards");
 				String isCompressed =  request.getParameter("isCompressed");
 				
 				try {

@@ -1,25 +1,25 @@
---DROP KEYSPACE "CMB";
---DROP KEYSPACE "CQS";
---DROP KEYSPACE "CNS";
+--DROP KEYSPACE "cmb";
+--DROP KEYSPACE "cqs";
+--DROP KEYSPACE "cns";
 
 -- modify to adjust replication strategy
 
---CREATE KEYSPACE IF NOT EXISTS "CMB" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
---CREATE KEYSPACE IF NOT EXISTS "CQS" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
---CREATE KEYSPACE IF NOT EXISTS "CNS" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+--CREATE KEYSPACE IF NOT EXISTS "cmb" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+--CREATE KEYSPACE IF NOT EXISTS "cqs" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+--CREATE KEYSPACE IF NOT EXISTS "cns" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
 
-CREATE KEYSPACE IF NOT EXISTS "CMB" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-CREATE KEYSPACE IF NOT EXISTS "CQS" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-CREATE KEYSPACE IF NOT EXISTS "CNS" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE IF NOT EXISTS "cmb" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE IF NOT EXISTS "cqs" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+CREATE KEYSPACE IF NOT EXISTS "cns" WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
-USE "CNS";
+USE "cns";
 
-CREATE TABLE IF NOT EXISTS "CNSAPIServers" (
+CREATE TABLE IF NOT EXISTS "cns_api_servers" (
    "host" text,
    "timestamp" text,
    "jmxport" text,
-   "dataCenter" text,
-   "serviceUrl" text,
+   "data_center" text,
+   "service_url" text,
   PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -33,14 +33,13 @@ CREATE TABLE IF NOT EXISTS "CNSAPIServers" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSSubscriptionAttributes" (
-  "subscriptionArn" text,
-  "confirmationWasAuthenticated" boolean,
-  "deliveryPolicy" text,
-  "effectiveDeliveryPolicy" text,
-  "topicArn" text,
-  "userId" text,
-  PRIMARY KEY (("subscriptionArn"))
+CREATE TABLE IF NOT EXISTS "cns_subscription_attributes" (
+  "subscription_arn" text,
+  "confirmation_was_authenticated" boolean,
+  "delivery_policy" text,
+  "topic_arn" text,
+  "user_id" text,
+  PRIMARY KEY (("subscription_arn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -53,12 +52,12 @@ CREATE TABLE IF NOT EXISTS "CNSSubscriptionAttributes" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicAttributes" (
-  "topicArn" text,
-  "effectiveDeliveryPolicy" text,
+CREATE TABLE IF NOT EXISTS "cns_topic_attributes" (
+  "topic_arn" text,
+  "effective_delivery_policy" text,
   "policy" text,
-  "userId" text,
-  PRIMARY KEY (("topicArn"))
+  "user_id" text,
+  PRIMARY KEY (("topic_arn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -71,11 +70,11 @@ CREATE TABLE IF NOT EXISTS "CNSTopicAttributes" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicStats" (
-  "topicArn" text,
+CREATE TABLE IF NOT EXISTS "cns_topic_stats" (
+  "topic_arn" text,
   "status" text,
   "value" counter,
-  PRIMARY KEY (("topicArn"), "status")
+  PRIMARY KEY (("topic_arn"), "status")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.010000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -88,12 +87,12 @@ CREATE TABLE IF NOT EXISTS "CNSTopicStats" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'SizeTieredCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptions" (
-  "topicArn" text,
+CREATE TABLE IF NOT EXISTS "cns_topic_subscriptions" (
+  "topic_arn" text,
   "endpoint" text,
   "protocol" text,
-  "subscriptionJson" text,
-  PRIMARY KEY (("topicArn"), "endpoint", "protocol")
+  "subscription_json" text,
+  PRIMARY KEY (("topic_arn"), "endpoint", "protocol")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -107,12 +106,13 @@ CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptions" (
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'chunk_length_in_kb': '64', 'class': 'SnappyCompressor'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsIndex" (
-  "subscriptionArn" text,
+CREATE TABLE IF NOT EXISTS "cns_topic_subscriptions_index" (
+  "subscription_arn" text,
   "endpoint" text,
+  "topic_arn" text,
   "protocol" text,
-  PRIMARY KEY (("subscriptionArn"), "endpoint")
-) WITH COMPACT STORAGE AND
+  PRIMARY KEY (("subscription_arn"), "endpoint")
+) WITH
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
   comment='' AND
@@ -124,13 +124,11 @@ CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsIndex" (
   compaction={'class': 'LeveledCompactionStrategy'} AND
   memtable_flush_period_in_ms=0;
 
-CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsTokenIndex" (
-  "token" text,
-  "subscriptionArn" text,
-  "value" text,
-  PRIMARY KEY (("token"), "subscriptionArn")
-) WITH COMPACT STORAGE AND
-  bloom_filter_fp_chance=0.100000 AND
+CREATE TABLE IF NOT EXISTS "cns_topic_subscriptions_token_index" (
+  "subscription_token" text,
+  "subscription_arn" text,
+  PRIMARY KEY (("subscription_token"), "subscription_arn")
+) WITH bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
@@ -141,13 +139,11 @@ CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsTokenIndex" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsUserIndex" (
-  "userId" text,
-  "subscriptionArn" text,
-  "value" text,
-  PRIMARY KEY (("userId"), "subscriptionArn")
-) WITH COMPACT STORAGE AND
-  bloom_filter_fp_chance=0.100000 AND
+CREATE TABLE IF NOT EXISTS "cns_topic_subscriptions_user_index" (
+  "user_id" text,
+  "subscription_arn" text,
+  PRIMARY KEY (("user_id"), "subscription_arn")
+) WITH bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
@@ -158,12 +154,12 @@ CREATE TABLE IF NOT EXISTS "CNSTopicSubscriptionsUserIndex" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopics" (
-  "topicArn" text,
-  "displayName" text,
+CREATE TABLE IF NOT EXISTS "cns_topics" (
+  "topic_arn" text,
+  "display_name" text,
   "name" text,
-  "userId" text,
-  PRIMARY KEY (("topicArn"))
+  "user_id" text,
+  PRIMARY KEY (("topic_arn"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -176,13 +172,11 @@ CREATE TABLE IF NOT EXISTS "CNSTopics" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSTopicsByUserId" (
-  "userId" text,
-  "topicArn" text,
-  value text,
-  PRIMARY KEY (("userId"), "topicArn")
-) WITH COMPACT STORAGE AND
-  caching={ 'keys' : 'ALL'} AND
+CREATE TABLE IF NOT EXISTS "cns_topics_by_user_id" (
+  "user_id" text,
+  "topic_arn" text,
+  PRIMARY KEY (("user_id"), "topic_arn")
+) WITH caching={ 'keys' : 'ALL'} AND
   bloom_filter_fp_chance=0.100000 AND
   comment='' AND
   dclocal_read_repair_chance=0.050000 AND
@@ -193,12 +187,13 @@ CREATE TABLE IF NOT EXISTS "CNSTopicsByUserId" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CNSWorkers" (
+CREATE TABLE IF NOT EXISTS "cns_workers" (
   "host" text,
-  "producerTimestamp" text,
-  "consumerTimestamp" text,
+  "producer_timestamp" text,
+  "consumer_timestamp" text,
   "jmxport" text,
   "mode" text,
+  "data_center" text,
   PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -212,16 +207,16 @@ CREATE TABLE IF NOT EXISTS "CNSWorkers" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-USE "CQS";
+USE "cqs";
 
-CREATE TABLE IF NOT EXISTS "CQSAPIServers" (
+CREATE TABLE IF NOT EXISTS "cqs_api_servers" (
   "host" text,
   "timestamp" text,
   "port" text,
   "jmxport" text,
-  "dataCenter" text,
-  "serviceUrl" text,
-  "redisServerList" text,
+  "data_center" text,
+  "service_url" text,
+  "redis_server_list" text,
   PRIMARY KEY (("host"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
@@ -235,12 +230,12 @@ CREATE TABLE IF NOT EXISTS "CQSAPIServers" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CQSPartitionedQueueMessages" (
-  "queueShardPartition" text,
-  "becomeVisibleTime" bigint,
-  "nodeUUID" bigint,
+CREATE TABLE IF NOT EXISTS "cqs_partitioned_queue_messages" (
+  "queue_shard_partition" text,
+  "become_visible_time" bigint,
+  "node_uuid" bigint,
   "message" text,
-  PRIMARY KEY (("queueShardPartition"), "becomeVisibleTime", "nodeUUID")
+  PRIMARY KEY (("queue_shard_partition"), "become_visible_time", "node_uuid")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -254,25 +249,25 @@ CREATE TABLE IF NOT EXISTS "CQSPartitionedQueueMessages" (
   compaction={'class': 'LeveledCompactionStrategy'} AND
   compression={'chunk_length_in_kb': '64', 'class': 'SnappyCompressor'};
 
-CREATE TABLE IF NOT EXISTS "CQSQueues" (
-  "relativeUrl" text,
-  "queueArn" text,
+CREATE TABLE IF NOT EXISTS "cqs_queues" (
+  "relative_url" text,
+  "queue_arn" text,
   "name" text,
-  "userId" text,
+  "user_id" text,
   "region" text,
-  "serviceEndpoint" text,
-  "visibilityTO" text,
-  "maxMsgSize" text,
-  "msgRetentionPeriod" text,
-  "delaySeconds" text,
+  "service_endpoint" text,
+  "visibility_timeout" text,
+  "max_message_size" text,
+  "message_retention_period" text,
+  "delay_seconds" text,
   "policy" text,
-  "createdTime" text,
-  "waitTime" text,
-  "numberOfPartitions" text,
-  "numberOfShards" text,
+  "created_time" text,
+  "wait_time" text,
+  "number_of_partitions" text,
+  "number_of_shards" text,
   "compressed" text,
-  "redrivePolicy" text,
-  PRIMARY KEY (("relativeUrl"))
+  "redrive_policy" text,
+  PRIMARY KEY (("relative_url"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -285,11 +280,11 @@ CREATE TABLE IF NOT EXISTS "CQSQueues" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "CQSQueuesByUserId" (
-  "userId" text,
-  "queueArn" text,
-  "createdTime" text,
-  PRIMARY KEY (("userId"), "queueArn")
+CREATE TABLE IF NOT EXISTS "cqs_queues_by_user_id" (
+  "user_id" text,
+  "queue_arn" text,
+  "created_time" text,
+  PRIMARY KEY (("user_id"), "queue_arn")
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -302,17 +297,17 @@ CREATE TABLE IF NOT EXISTS "CQSQueuesByUserId" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-USE "CMB";
+USE "cmb";
 
-CREATE TABLE IF NOT EXISTS "Users" (
-  "userId" text,
-  "userName" text,
-  "accessKey" text,
-  "accessSecret" text,
+CREATE TABLE IF NOT EXISTS "users" (
+  "user_id" text,
+  "user_name" text,
+  "access_key" text,
+  "access_secret" text,
   "description" text,
-  "hashPassword" text,
-  "isAdmin" text,
-  PRIMARY KEY (("userId"))
+  "hash_password" text,
+  "is_admin" text,
+  PRIMARY KEY (("user_id"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -325,11 +320,11 @@ CREATE TABLE IF NOT EXISTS "Users" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "UserIdByName" (
-  "userId" text,
-  "userName" text,
-  "hashPassword" text,
-  PRIMARY KEY (("userName"))
+CREATE TABLE IF NOT EXISTS "user_id_by_name" (
+  "user_id" text,
+  "user_name" text,
+  "hash_password" text,
+  PRIMARY KEY (("user_name"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND
@@ -342,11 +337,11 @@ CREATE TABLE IF NOT EXISTS "UserIdByName" (
   memtable_flush_period_in_ms=0 AND
   compaction={'class': 'LeveledCompactionStrategy'};
 
-CREATE TABLE IF NOT EXISTS "userIdsByAccessKey" (
-  "userId" text,
-  "accessKey" text,
-  "accessSecret" text,
-  PRIMARY KEY (("accessKey"))
+CREATE TABLE IF NOT EXISTS "user_ids_by_access_key" (
+  "user_id" text,
+  "access_key" text,
+  "access_secret" text,
+  PRIMARY KEY (("access_key"))
 ) WITH COMPACT STORAGE AND
   bloom_filter_fp_chance=0.100000 AND
   caching={ 'keys' : 'ALL'} AND

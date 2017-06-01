@@ -512,7 +512,7 @@ public class Util {
 //
 //		for (int i=0; i<numberOfPartitions; i++) {
 //			String queueKey = queueHash + "_" + i;
-//			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+//			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "cqs_partitioned_queue_messages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 //			messageCount += partitionCount;
 //		}
 //
@@ -528,7 +528,7 @@ public class Util {
 //
 //		for (int i=0; i<numberOfPartitions; i++) {
 //			String queueKey = queueHash + "_" + i;
-//			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+//			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "cqs_partitioned_queue_messages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 //			messageCounts.add(partitionCount);
 //		}
 //
